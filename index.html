@@ -1,0 +1,1228 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Presenze Studio</title>
+  <!-- Icona e comportamento "da app" quando il sito è aggiunto alla schermata Home -->
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="icon" type="image/png" href="icona-192.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Presenze">
+  <meta name="theme-color" content="#f4f4f2">
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      margin: 0; padding: 16px;
+      background: #f4f4f2; color: #1a1a1a;
+    }
+    .contenitore { max-width: 480px; margin: 0 auto; }
+    .box {
+      background: #fff; padding: 20px; border-radius: 12px;
+      margin-bottom: 16px;
+    }
+    h1 { font-size: 22px; margin: 0 0 8px; }
+    h2 { font-size: 17px; margin: 0 0 4px; }
+    label { display: block; font-size: 14px; margin: 16px 0 6px; }
+    textarea { resize: vertical; line-height: 1.4; font-family: inherit; }
+    .contatore { text-align: right; font-size: 12px; color: #999; margin-top: 4px; }
+    input, select, textarea {
+      width: 100%; min-height: 46px; padding: 10px 12px; font-size: 16px;
+      border: 1px solid #ccc; border-radius: 8px;
+      background: #fff; color: #1a1a1a;
+      -webkit-appearance: none; appearance: none;
+    }
+    select {
+      padding-right: 34px;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%23555' stroke-width='1.6'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 12px center;
+    }
+    .spunta { display: flex; align-items: center; gap: 10px; margin: 16px 0 0; font-size: 15px; cursor: pointer; }
+    .spunta input {
+      width: 22px; height: 22px; min-height: 0; padding: 0; margin: 0; flex: none;
+      -webkit-appearance: checkbox; appearance: auto; accent-color: #1a1a1a;
+    }
+    .spunta small { color: #888; }
+    .nota-giorno { font-size: 13px; color: #555; background: #f4f4f2; border-radius: 6px; padding: 6px 10px; margin: 8px 0 0; }
+    .giorno .segno { width: 14px; height: 3px; border-radius: 2px; background: transparent; }
+    .giorno.con-appuntamento .segno { background: #b5b5b0; }
+    .giorno.scelto .segno { background: #fff; }
+    .appuntamento { background: #f4f4f2; border-radius: 8px; padding: 8px 10px !important; margin-bottom: 6px; border-top: 0 !important; }
+    .due-colonne { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .pulsante {
+      width: 100%; margin-top: 20px; padding: 14px; font-size: 16px;
+      border: 0; border-radius: 8px; background: #1a1a1a; color: #fff;
+    }
+    .pulsante:disabled { opacity: .5; }
+    .messaggio { font-size: 14px; min-height: 20px; margin: 12px 0 0; }
+    .messaggio.errore { color: #c0392b; }
+    .messaggio.ok { color: #1e8449; }
+    .nascosto { display: none !important; }
+    .spiegazione { font-size: 14px; color: #555; margin: 0 0 4px; }
+    label small { color: #888; font-weight: 400; }
+    #vai-attivazione, #torna-login { display: block; margin: 12px auto 0; font-size: 14px; }
+    #a-codice { text-transform: uppercase; letter-spacing: .2em; font-family: ui-monospace, Menlo, monospace; }
+
+    /* Barra in alto */
+    .barra {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 12px; font-size: 15px;
+    }
+    .menu-utente { position: relative; }
+    .avatar {
+      width: 40px; height: 40px; border-radius: 50%; border: 0;
+      background: #1a1a1a; color: #fff; font-size: 14px; font-weight: 600; letter-spacing: .03em;
+    }
+    .tendina {
+      position: absolute; right: 0; top: 46px; z-index: 10; min-width: 180px;
+      background: #fff; border-radius: 10px; padding: 6px;
+      box-shadow: 0 6px 24px rgba(0, 0, 0, .12);
+    }
+    .tendina button {
+      display: block; width: 100%; text-align: left; padding: 12px; font-size: 15px;
+      border: 0; border-radius: 6px; background: none; color: #1a1a1a;
+    }
+    .tendina button:hover { background: #f4f4f2; }
+    .link { background: none; border: 0; padding: 4px; font-size: 15px; color: #555; text-decoration: underline; }
+
+    /* Schede */
+    .schede, .selettore {
+      display: flex; gap: 4px; margin-bottom: 16px;
+      background: #e6e6e3; padding: 4px; border-radius: 10px;
+    }
+    .schede a { display: flex; align-items: center; justify-content: center; text-decoration: none; }
+    .schede button, .schede a, .selettore button {
+      flex: 1 1 auto; white-space: nowrap; padding: 10px 8px; font-size: 14px;
+      border: 0; border-radius: 8px; background: transparent; color: #555;
+    }
+    .schede button.attiva, .selettore button.attiva { background: #fff; color: #1a1a1a; font-weight: 600; }
+
+    /* Elenco presenze */
+    .lista { list-style: none; margin: 12px 0 0; padding: 0; }
+    .lista li { padding: 12px 0; border-top: 1px solid #eee; }
+    .lista li strong { display: block; font-size: 15px; }
+    .lista li span { font-size: 14px; color: #666; }
+    .vuoto, .lista .vuoto { color: #888; font-size: 14px; }
+    .lista .descrizione { font-size: 14px; color: #444; margin: 4px 0 0; }
+    .lista li.in-attesa { opacity: .55; }
+    .lista .attesa { font-size: 13px; color: #888; margin: 8px 0 0; }
+    .lista li.in-modifica { background: #fff8e1; margin: 0 -20px; padding: 12px 20px; }
+    .azioni { display: flex; gap: 8px; margin-top: 10px; }
+    .azioni button {
+      flex: 1; padding: 9px; font-size: 14px;
+      border: 1px solid #ccc; border-radius: 8px; background: #fff; color: #1a1a1a;
+    }
+    .azioni button.conferma { background: #c0392b; border-color: #c0392b; color: #fff; }
+    /* Calendario */
+    .mese-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+    .mese-nav h2 { margin: 0; }
+    .mese-nav button {
+      width: 44px; height: 44px; font-size: 24px; line-height: 1;
+      border: 1px solid #ddd; border-radius: 8px; background: #fff; color: #1a1a1a;
+    }
+    .griglia { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+    .griglia.intestazione span { text-align: center; font-size: 12px; color: #888; padding-bottom: 4px; }
+    .giorno {
+      min-height: 52px; padding: 6px 2px 4px;
+      display: flex; flex-direction: column; align-items: center; justify-content: space-between;
+      border: 1px solid transparent; border-radius: 8px; background: #f7f7f5;
+      font-size: 15px; color: #1a1a1a;
+    }
+    .giorno.weekend { color: #999; }
+    .giorno.oggi { border-color: #1a1a1a; }
+    .giorno.scelto { background: #1a1a1a; color: #fff; }
+    .pallini { display: flex; gap: 2px; min-height: 8px; align-items: center; }
+    .pallino { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
+    .piu { font-size: 10px; line-height: 1; }
+    .lista li .chi { display: flex; align-items: center; gap: 8px; }
+    .lista li .chi .pallino { width: 10px; height: 10px; }
+    /* Riepilogo */
+    .filtri label { margin-top: 0; }
+    .r-testa { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+    .r-testa h2 { display: flex; align-items: center; gap: 8px; }
+    .r-testa .pallino { width: 12px; height: 12px; }
+    .r-totale { font-size: 20px; font-weight: 600; white-space: nowrap; }
+    .r-mese { border-top: 1px solid #eee; margin-top: 14px; padding-top: 12px; }
+    .r-mese h3 { font-size: 15px; margin: 0 0 6px; display: flex; justify-content: space-between; }
+    .r-mese h3 span { font-weight: 400; color: #666; }
+    .chip-riga { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0; }
+    .chip { font-size: 13px; padding: 4px 10px; border-radius: 99px; background: #f0f0ed; }
+    details summary { font-size: 14px; color: #555; padding: 6px 0; cursor: pointer; }
+    .dettaglio { list-style: none; margin: 0; padding: 0; font-size: 14px; }
+    .dettaglio li { display: grid; grid-template-columns: 1fr auto; gap: 2px 8px; padding: 8px 0; border-top: 1px solid #f2f2f2; }
+    .dettaglio li .ore { text-align: right; font-weight: 600; }
+    .dettaglio li small { color: #777; grid-column: 1 / -1; }
+    .dettaglio li.prevista { color: #888; }
+    /* Dashboard progetti */
+    .titolo-sezione { font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: #777; margin: 24px 4px 8px; }
+    .titolo-sezione:first-child { margin-top: 0; }
+    .responsabile { font-size: 14px; color: #777; margin: 2px 0 0; }
+    .barra-ore { height: 6px; border-radius: 3px; background: #eee; margin: 12px 0 4px; overflow: hidden; }
+    .barra-ore div { height: 100%; background: #1a1a1a; }
+    .barra-ore.oltre div { background: #c0392b; }
+    .nota-ore { font-size: 12px; color: #777; }
+    .chip .pallino { margin-right: 4px; }
+    /* Stato delle presenze */
+    .stato { display: inline-block; font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 99px; margin-left: 6px; vertical-align: 2px; }
+    .stato.ok { background: #e3f4e8; color: #1e7b3c; }
+    .stato.attesa { background: #f1f1ee; color: #777; }
+    #messaggio-riepilogo:empty { display: none; }
+    .nota-modifica { font-size: 13px; color: #8a5a00; background: #fff4dc; border-radius: 6px; padding: 8px 10px; margin: 4px 0 0; }
+    .barra-conferma { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .barra-conferma span { font-size: 14px; }
+    .pulsante-piccolo {
+      padding: 9px 14px; font-size: 14px; border: 0; border-radius: 8px;
+      background: #1a1a1a; color: #fff; white-space: nowrap;
+    }
+    .r-sotto { font-size: 13px; color: #777; margin: 2px 0 0; }
+    .dettaglio .azioni { grid-column: 1 / -1; margin-top: 6px; }
+    .dettaglio .riga-stato { grid-column: 1 / -1; font-size: 12px; color: #777; }
+    .dettaglio .riga-stato .stato { margin-left: 0; margin-right: 6px; }
+    .pulsante-secondario {
+      width: 100%; margin-top: 10px; padding: 12px; font-size: 15px;
+      border: 1px solid #ccc; border-radius: 8px; background: #fff; color: #1a1a1a;
+    }
+  </style>
+</head>
+<body>
+<div class="contenitore">
+
+  <!-- ===== Schermata di login ===== -->
+  <div id="schermata-login" class="box">
+    <h1>Presenze Studio</h1>
+    <form id="form-login">
+      <label for="username">Email</label>
+      <input id="username" type="email" inputmode="email" autocomplete="username" autocapitalize="none" required>
+
+      <label for="password">Password</label>
+      <input id="password" type="password" autocomplete="current-password" required>
+
+      <button type="submit" id="btn-login" class="pulsante">Entra</button>
+      <p class="messaggio errore" id="errore-login"></p>
+      <button type="button" id="vai-attivazione" class="link">Primo accesso o password dimenticata?</button>
+    </form>
+
+    <!-- Primo accesso / password dimenticata -->
+    <form id="form-attivazione" class="nascosto">
+      <p class="spiegazione">Inserisci il codice di attivazione che hai ricevuto e scegli la tua password.</p>
+
+      <label for="a-email">Email</label>
+      <input id="a-email" type="email" inputmode="email" autocomplete="username" autocapitalize="none" required>
+
+      <label for="a-codice">Codice di attivazione</label>
+      <input id="a-codice" autocapitalize="characters" autocomplete="one-time-code" maxlength="6" required>
+
+      <label for="a-password">Nuova password <small>(almeno 8 caratteri)</small></label>
+      <input id="a-password" type="password" autocomplete="new-password" minlength="8" required>
+
+      <label for="a-password2">Ripeti la password</label>
+      <input id="a-password2" type="password" autocomplete="new-password" minlength="8" required>
+
+      <button type="submit" id="btn-attiva" class="pulsante">Salva password ed entra</button>
+      <p class="messaggio errore" id="errore-attivazione"></p>
+      <button type="button" id="torna-login" class="link">Torna all'accesso</button>
+    </form>
+  </div>
+
+  <!-- ===== Schermata dopo il login ===== -->
+  <div id="schermata-app" class="nascosto">
+
+    <div class="barra">
+      <span>Ciao, <strong id="nome-utente"></strong></span>
+      <div class="menu-utente">
+        <button type="button" id="btn-avatar" class="avatar" aria-haspopup="true" aria-expanded="false"></button>
+        <div id="tendina-utente" class="tendina nascosto">
+          <button type="button" id="btn-account">Cambia password</button>
+          <button type="button" id="btn-logout">Esci</button>
+        </div>
+      </div>
+    </div>
+
+    <nav class="schede">
+      <button data-scheda="segna">Segna presenza</button>
+      <button data-scheda="riepilogo" id="tab-riepilogo">Riepilogo</button>
+      <a id="link-calendario" href="https://calendar.google.com/calendar/" target="_blank" rel="noopener">Calendario ↗</a>
+    </nav>
+
+    <!-- Scheda: Segna presenza -->
+    <section id="scheda-segna" class="scheda">
+      <div class="box" id="box-modulo">
+        <h2 id="titolo-modulo">Nuova presenza</h2>
+        <p id="nota-modifica" class="nota-modifica nascosto"></p>
+        <form id="form-presenza">
+          <label for="p-data">Data</label>
+          <input type="date" id="p-data" required>
+          <p id="nota-giorno" class="nota-giorno nascosto"></p>
+
+          <div class="due-colonne">
+            <div>
+              <label for="p-entrata">Entrata</label>
+              <input type="time" id="p-entrata" required>
+            </div>
+            <div>
+              <label for="p-uscita">Uscita</label>
+              <input type="time" id="p-uscita" required>
+            </div>
+          </div>
+
+          <label for="p-descrizione">Cosa farai in studio</label>
+          <textarea id="p-descrizione" rows="3" maxlength="200" required
+            placeholder="Es. cucito, cartamodelli, serigrafia…"></textarea>
+          <div class="contatore"><span id="contatore-descrizione">0</span>/200</div>
+
+          <button type="submit" id="btn-salva" class="pulsante">Salva presenza</button>
+          <button type="button" id="btn-annulla" class="pulsante-secondario nascosto">Annulla modifica</button>
+          <p class="messaggio" id="messaggio-presenza"></p>
+        </form>
+      </div>
+
+      <div class="box">
+        <h2>Le mie prossime presenze</h2>
+        <ul id="lista-presenze" class="lista"></ul>
+      </div>
+    </section>
+
+    <!-- Scheda: cambio password -->
+    <section id="scheda-account" class="scheda box nascosto">
+      <h2>Cambia password</h2>
+      <form id="form-password">
+        <label for="c-vecchia">Password attuale</label>
+        <input id="c-vecchia" type="password" autocomplete="current-password" required>
+
+        <label for="c-nuova">Nuova password <small>(almeno 8 caratteri)</small></label>
+        <input id="c-nuova" type="password" autocomplete="new-password" minlength="8" required>
+
+        <label for="c-nuova2">Ripeti la nuova password</label>
+        <input id="c-nuova2" type="password" autocomplete="new-password" minlength="8" required>
+
+        <button type="submit" id="btn-cambia" class="pulsante">Cambia password</button>
+        <p class="messaggio" id="messaggio-password"></p>
+      </form>
+    </section>
+
+    <!-- Scheda: Riepilogo (l'amministratore vede tutti, gli altri solo sé stessi) -->
+    <section id="scheda-riepilogo" class="scheda nascosto">
+      <div class="box filtri">
+        <div class="due-colonne" id="r-filtri">
+          <div id="r-blocco-persona">
+            <label for="r-persona">Persona</label>
+            <select id="r-persona"></select>
+          </div>
+          <div>
+            <label for="r-mese">Mese</label>
+            <select id="r-mese"></select>
+          </div>
+        </div>
+        <p class="messaggio" id="messaggio-riepilogo"></p>
+      </div>
+      <div id="r-risultati"></div>
+    </section>
+
+  </div>
+</div>
+
+<script src="config.js"></script>
+<script>
+  // L'indirizzo del foglio Google (API_URL) si trova nel file config.js,
+  // così questo file si può sostituire senza doverlo reinserire ogni volta.
+
+  // Collegamento con Apps Script.
+  // Se la pagina è aperta da Google, usa il collegamento di Google;
+  // se è aperta da GitHub, manda le richieste via internet all'indirizzo qui sopra.
+  // Il resto del codice non cambia: continua a usare google.script.run.
+  if (!(window.google && google.script && google.script.run)) {
+    window.google = {
+      script: {
+        get run() { return nuovaChiamata(); }
+      }
+    };
+  }
+
+  function nuovaChiamata() {
+    let quandoRiesce = function () {};
+    let quandoFallisce = function () {};
+    const chiamata = new Proxy({}, {
+      get: function (_, nome) {
+        if (nome === 'withSuccessHandler') return function (f) { quandoRiesce = f; return chiamata; };
+        if (nome === 'withFailureHandler') return function (f) { quandoFallisce = f; return chiamata; };
+        return function () {
+          if (typeof API_URL === 'undefined' || API_URL.indexOf('INCOLLA') !== -1) {
+            quandoFallisce(new Error('manca l\'indirizzo del foglio in config.js'));
+            return;
+          }
+          fetch(API_URL, {
+            method: 'POST',
+            body: JSON.stringify({ funzione: nome, argomenti: Array.from(arguments) })
+          })
+            .then(function (r) { return r.json(); })
+            .then(function (dati) {
+              if (dati.erroreServer) quandoFallisce(new Error(dati.erroreServer));
+              else quandoRiesce(dati.risultato);
+            })
+            .catch(function () { quandoFallisce(new Error('connessione non riuscita')); });
+        };
+      }
+    });
+    return chiamata;
+  }
+
+  // Orari proposti di default nel modulo (puoi cambiarli)
+  const ORARIO_ENTRATA = '09:00';
+  const ORARIO_USCITA = '18:00';
+
+  let token = null;
+  let utente = null;
+
+  // Scorciatoia per prendere un elemento della pagina dal suo id
+  function el(id) { return document.getElementById(id); }
+
+  // ---------- Memoria del telefono ----------
+  function salvaToken(valore) {
+    try {
+      if (valore) localStorage.setItem('token', valore);
+      else localStorage.removeItem('token');
+    } catch (e) {}
+  }
+  function leggiToken() {
+    try { return localStorage.getItem('token'); } catch (e) { return null; }
+  }
+
+  // Copia degli ultimi dati ricevuti: si mostrano subito, poi si aggiornano in sottofondo
+  const PREFISSO_CACHE = 'cache:';
+  function salvaCache(chiave, valore) {
+    try { localStorage.setItem(PREFISSO_CACHE + chiave, JSON.stringify(valore)); } catch (e) {}
+  }
+  function leggiCache(chiave) {
+    try {
+      const testo = localStorage.getItem(PREFISSO_CACHE + chiave);
+      return testo ? JSON.parse(testo) : null;
+    } catch (e) { return null; }
+  }
+  function svuotaCache() {
+    try {
+      Object.keys(localStorage)
+        .filter(function (k) { return k.indexOf(PREFISSO_CACHE) === 0; })
+        .forEach(function (k) { localStorage.removeItem(k); });
+    } catch (e) {}
+  }
+
+  // ---------- Strumenti ----------
+
+  // Data di oggi nel formato 2026-10-13
+  function dataDiOggi() {
+    const d = new Date();
+    return d.getFullYear() + '-' +
+      String(d.getMonth() + 1).padStart(2, '0') + '-' +
+      String(d.getDate()).padStart(2, '0');
+  }
+
+  // Da "2026-10-14" a "Mercoledì 14 ottobre"
+  function dataLeggibile(testo) {
+    const [anno, mese, giorno] = testo.split('-').map(Number);
+    const d = new Date(anno, mese - 1, giorno);
+    const s = d.toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long' });
+    return s.charAt(0).toUpperCase() + s.slice(1);
+  }
+
+  // Evita che un testo venga interpretato come codice HTML
+  function sicuro(testo) {
+    const d = document.createElement('div');
+    d.textContent = testo;
+    return d.innerHTML;
+  }
+
+  // Testo dell'errore arrivato dal server (così si capisce cosa non va)
+  function testoErrore(err) {
+    return 'Errore: ' + (err && err.message ? err.message : 'connessione non riuscita') + '.';
+  }
+
+  function mostraMessaggio(id, testo, tipo) {
+    el(id).textContent = testo;
+    el(id).className = 'messaggio ' + (tipo || '');
+  }
+
+  // ---------- Schermate e schede ----------
+
+  // datiIniziali: i dati arrivati insieme al login (se ci sono)
+  function mostraApp(datiIniziali) {
+    salvaCache('utente', { nome: utente.nome, ruolo: utente.ruolo, username: utente.username });
+    el('nome-utente').textContent = utente.nome;
+    el('btn-avatar').textContent = iniziali(utente.nome);
+    el('schermata-login').classList.add('nascosto');
+    el('schermata-app').classList.remove('nascosto');
+    apriScheda('segna');
+    resetModulo();
+
+    if (datiIniziali) {
+      aggiornaDati(datiIniziali);
+    } else {
+      // Mostra subito gli ultimi dati salvati sul telefono, poi li aggiorna
+      const salvati = leggiCache('miei');
+      if (salvati) aggiornaDati(salvati);
+      caricaDati(!!salvati);
+    }
+  }
+
+  function mostraLogin() {
+    el('schermata-app').classList.add('nascosto');
+    el('schermata-login').classList.remove('nascosto');
+  }
+
+  function esci() {
+    token = null;
+    utente = null;
+    salvaToken(null);
+    svuotaCache();
+    miePresenze = [];
+    datiRiepilogo = null;
+    ultimiDati = {};
+    filtriPronti = false;
+    mostraLogin();
+  }
+
+  function apriScheda(nome) {
+    document.querySelectorAll('.scheda').forEach(function (s) {
+      s.classList.toggle('nascosto', s.id !== 'scheda-' + nome);
+    });
+    document.querySelectorAll('.schede button').forEach(function (b) {
+      b.classList.toggle('attiva', b.dataset.scheda === nome);
+    });
+    if (nome === 'riepilogo') caricaRiepilogo();
+  }
+
+  document.querySelectorAll('.schede button').forEach(function (b) {
+    b.addEventListener('click', function () { apriScheda(b.dataset.scheda); });
+  });
+
+  // ---------- Login ----------
+
+  el('form-login').addEventListener('submit', function (e) {
+    e.preventDefault();
+    const btn = el('btn-login');
+    btn.disabled = true;
+    btn.textContent = 'Accesso…';
+    mostraMessaggio('errore-login', '', 'errore');
+
+    google.script.run
+      .withSuccessHandler(function (risposta) {
+        btn.disabled = false;
+        btn.textContent = 'Entra';
+        if (risposta.errore) {
+          mostraMessaggio('errore-login', risposta.errore, 'errore');
+          return;
+        }
+        token = risposta.token;
+        utente = risposta;
+        salvaToken(token);
+        el('password').value = '';
+        mostraApp(risposta.dati);
+      })
+      .withFailureHandler(function (err) {
+        btn.disabled = false;
+        btn.textContent = 'Entra';
+        mostraMessaggio('errore-login', testoErrore(err), 'errore');
+      })
+      .login(el('username').value, el('password').value);
+  });
+
+  el('btn-logout').addEventListener('click', esci);
+
+  // ---------- Appuntamenti fissi ----------
+
+  // Regole lette dalla scheda "Appuntamenti": { titolo, dal, ogni, orario }
+  let regoleAppuntamenti = [];
+
+  // Appuntamenti che cadono in una data ("2026-10-15")
+  function appuntamentiDel(data) {
+    const [a, m, g] = data.split('-').map(Number);
+    const giorno = Date.UTC(a, m - 1, g);
+    return regoleAppuntamenti.filter(function (r) {
+      const [a2, m2, g2] = r.dal.split('-').map(Number);
+      const differenza = Math.round((giorno - Date.UTC(a2, m2 - 1, g2)) / 86400000);
+      return differenza >= 0 && differenza % (7 * r.ogni) === 0;
+    });
+  }
+
+  // Da "9:30-17:30" a { entrata: "09:30", uscita: "17:30" } (o null)
+  function leggiOrario(testo) {
+    const m = String(testo).match(/(\d{1,2})[:.](\d{2})\s*[-–]\s*(\d{1,2})[:.](\d{2})/);
+    if (!m) return null;
+    return { entrata: m[1].padStart(2, '0') + ':' + m[2], uscita: m[3].padStart(2, '0') + ':' + m[4] };
+  }
+
+  function testoAppuntamento(a) {
+    return a.titolo + (a.orario ? ' · ' + a.orario : '');
+  }
+
+  // ---------- Presenze ----------
+
+  const DA_CONFERMARE = 'Da confermare';
+  const CONFERMATA = 'Confermata';
+
+  let miePresenze = [];       // le mie presenze da oggi in poi
+  let idInModifica = null;    // id della presenza che si sta modificando (null = nuova)
+  let modificaAltrui = null;  // nome della persona, se l'admin sta modificando la presenza di un altro
+  let moduloToccato = false;  // l'utente ha già cambiato qualcosa nel modulo?
+  let ultimiDati = {};        // ultima versione di appuntamenti e presenze
+
+  function sonoAdmin() {
+    return !!utente && utente.ruolo === 'admin';
+  }
+
+  // Mostra sotto la data gli appuntamenti del giorno e, se richiesto, ne propone gli orari
+  function suggerimentiGiorno(applica) {
+    const nota = el('nota-giorno');
+    const lista = el('p-data').value ? appuntamentiDel(el('p-data').value) : [];
+    nota.classList.toggle('nascosto', lista.length === 0);
+    nota.textContent = lista.map(testoAppuntamento).join(' — ');
+    if (!applica) return;
+    const conOrario = lista.find(function (a) { return leggiOrario(a.orario); });
+    if (conOrario) {
+      const o = leggiOrario(conOrario.orario);
+      el('p-entrata').value = o.entrata;
+      el('p-uscita').value = o.uscita;
+    }
+  }
+
+  el('p-data').addEventListener('change', function () { suggerimentiGiorno(!idInModifica); });
+  el('form-presenza').addEventListener('input', function () { moduloToccato = true; });
+
+  function aggiornaContatore() {
+    el('contatore-descrizione').textContent = el('p-descrizione').value.length;
+  }
+  el('p-descrizione').addEventListener('input', aggiornaContatore);
+
+  // Riporta il modulo a "Nuova presenza"
+  function resetModulo() {
+    idInModifica = null;
+    modificaAltrui = null;
+    el('p-data').value = dataDiOggi();
+    el('p-entrata').value = ORARIO_ENTRATA;
+    el('p-uscita').value = ORARIO_USCITA;
+    el('p-descrizione').value = '';
+    aggiornaContatore();
+    el('titolo-modulo').textContent = 'Nuova presenza';
+    el('nota-modifica').classList.add('nascosto');
+    el('btn-salva').textContent = 'Salva presenza';
+    el('btn-annulla').classList.add('nascosto');
+    moduloToccato = false;
+    suggerimentiGiorno(true);
+    mostraLista();
+  }
+
+  // Mette nel modulo una presenza esistente per modificarla.
+  // altrui = nome della persona, se l'admin modifica la presenza di un altro.
+  function riempiModulo(p, altrui) {
+    resetModulo();
+    idInModifica = p.id;
+    modificaAltrui = altrui || null;
+    el('p-data').value = p.data;
+    el('p-entrata').value = p.entrata;
+    el('p-uscita').value = p.uscita;
+    el('p-descrizione').value = p.descrizione;
+    aggiornaContatore();
+    suggerimentiGiorno(false);
+    moduloToccato = true;
+
+    el('titolo-modulo').textContent = 'Modifica presenza';
+    const nota = el('nota-modifica');
+    if (altrui) {
+      nota.textContent = 'Stai modificando la presenza di ' + altrui + '. Dopo il salvataggio risulterà confermata.';
+    } else if (!sonoAdmin() && p.stato === CONFERMATA) {
+      nota.textContent = 'Questa presenza è già confermata: dopo la modifica dovrà essere confermata di nuovo.';
+    } else {
+      nota.textContent = '';
+    }
+    nota.classList.toggle('nascosto', !nota.textContent);
+    el('btn-salva').textContent = 'Salva modifiche';
+    el('btn-annulla').classList.remove('nascosto');
+    mostraMessaggio('messaggio-presenza', '');
+    mostraLista();
+    el('box-modulo').scrollIntoView({ behavior: 'smooth' });
+  }
+
+  el('btn-annulla').addEventListener('click', function () {
+    const tornaAlRiepilogo = !!modificaAltrui;
+    resetModulo();
+    mostraMessaggio('messaggio-presenza', '');
+    if (tornaAlRiepilogo) apriScheda('riepilogo');
+  });
+
+  // silenzioso = ci sono già dati a schermo, quindi niente "Caricamento…"
+  function caricaDati(silenzioso) {
+    if (!silenzioso) el('lista-presenze').innerHTML = '<li class="vuoto">Caricamento…</li>';
+    google.script.run
+      .withSuccessHandler(aggiornaDati)
+      .withFailureHandler(function (err) {
+        if (!silenzioso) el('lista-presenze').innerHTML = '<li class="vuoto">' + sicuro(testoErrore(err)) + '</li>';
+      })
+      .caricaMieiDati(token);
+  }
+
+  // La risposta può essere completa o contenere solo le presenze (dopo un salvataggio)
+  function aggiornaDati(risposta) {
+    if (risposta.errore) {
+      if (risposta.sessione) esci();
+      return;
+    }
+    ultimiDati = Object.assign({}, ultimiDati, risposta);
+    delete ultimiDati.ms;
+    salvaCache('miei', ultimiDati);
+
+    if (risposta.appuntamenti) regoleAppuntamenti = risposta.appuntamenti;
+    if (risposta.idCalendario) impostaLinkCalendario(risposta.idCalendario);
+    if (risposta.appuntamenti && !idInModifica && !moduloToccato) suggerimentiGiorno(true);
+
+    miePresenze = risposta.presenze;
+    mostraLista();
+  }
+
+  // Il pulsante "Calendario ↗" apre il calendario condiviso in Google Calendar
+  function impostaLinkCalendario(id) {
+    let codice = '';
+    try { codice = btoa(id).replace(/=+$/, ''); } catch (e) {}
+    el('link-calendario').href = 'https://calendar.google.com/calendar/u/0/r' + (codice ? '?cid=' + codice : '');
+  }
+
+  function etichettaStato(stato) {
+    return '<span class="stato ' + (stato === CONFERMATA ? 'ok' : 'attesa') + '">' + stato + '</span>';
+  }
+
+  // Elenco delle mie prossime presenze con Modifica / Elimina
+  function mostraLista() {
+    const lista = el('lista-presenze');
+    if (miePresenze.length === 0) {
+      lista.innerHTML = '<li class="vuoto">Nessuna presenza segnata.</li>';
+      return;
+    }
+    lista.innerHTML = miePresenze.map(function (p) {
+      const classi = (p.id === idInModifica ? 'in-modifica ' : '') + (p.inAttesa ? 'in-attesa' : '');
+      return '<li class="' + classi + '">' +
+        '<strong>' + dataLeggibile(p.data) + (p.inAttesa ? '' : etichettaStato(p.stato)) + '</strong>' +
+        '<span>' + p.entrata + '–' + p.uscita + '</span>' +
+        '<p class="descrizione">' + sicuro(p.descrizione) + '</p>' +
+        (p.inAttesa
+          ? '<p class="attesa">Salvataggio in corso…</p>'
+          : '<div class="azioni">' +
+              '<button type="button" data-azione="modifica" data-id="' + p.id + '">Modifica</button>' +
+              '<button type="button" data-azione="elimina" data-id="' + p.id + '">Elimina</button>' +
+            '</div>') +
+        '</li>';
+    }).join('');
+  }
+
+  // Un solo "ascoltatore" per tutti i pulsanti dell'elenco
+  el('lista-presenze').addEventListener('click', function (e) {
+    const btn = e.target.closest('button');
+    if (!btn) return;
+    const id = btn.dataset.id;
+    if (id.indexOf('temp-') === 0) return; // ancora in salvataggio
+
+    if (btn.dataset.azione === 'modifica') {
+      const p = miePresenze.find(function (x) { return x.id === id; });
+      if (p && !p.inAttesa) riempiModulo(p);
+    }
+
+    if (btn.dataset.azione === 'elimina') {
+      // Primo tocco: chiede conferma. Secondo tocco: elimina.
+      if (!btn.classList.contains('conferma')) {
+        btn.classList.add('conferma');
+        btn.textContent = 'Conferma eliminazione';
+        setTimeout(function () {
+          if (btn.disabled) return;
+          btn.classList.remove('conferma');
+          btn.textContent = 'Elimina';
+        }, 4000);
+        return;
+      }
+      // La presenza sparisce subito dall'elenco; se il server dà errore, ricompare
+      const posizione = miePresenze.findIndex(function (x) { return x.id === id; });
+      const eliminata = miePresenze[posizione];
+      miePresenze.splice(posizione, 1);
+      if (id === idInModifica) resetModulo();
+      mostraLista();
+      mostraMessaggio('messaggio-presenza', 'Presenza eliminata', 'ok');
+
+      function ripristina(testo) {
+        miePresenze.splice(posizione, 0, eliminata);
+        mostraLista();
+        mostraMessaggio('messaggio-presenza', testo, 'errore');
+      }
+
+      google.script.run
+        .withSuccessHandler(function (risposta) {
+          if (risposta.errore) {
+            if (risposta.sessione) { esci(); return; }
+            ripristina(risposta.errore);
+            return;
+          }
+          aggiornaDati(risposta);
+        })
+        .withFailureHandler(function (err) { ripristina(testoErrore(err)); })
+        .eliminaPresenza(token, id);
+    }
+  });
+
+  // Quando si preme "Salva presenza" / "Salva modifiche"
+  el('form-presenza').addEventListener('submit', function (e) {
+    e.preventDefault();
+
+    const presenza = {
+      id: idInModifica,
+      data: el('p-data').value,
+      entrata: el('p-entrata').value,
+      uscita: el('p-uscita').value,
+      descrizione: el('p-descrizione').value.trim()
+    };
+
+    if (!presenza.descrizione) {
+      mostraMessaggio('messaggio-presenza', 'Scrivi cosa farai in studio.', 'errore');
+      return;
+    }
+    if (presenza.uscita <= presenza.entrata) {
+      mostraMessaggio('messaggio-presenza', "L'uscita deve essere dopo l'entrata.", 'errore');
+      return;
+    }
+
+    // L'admin modifica la presenza di un altro: si aspetta la risposta e si torna al riepilogo
+    if (modificaAltrui) {
+      const nome = modificaAltrui;
+      const btn = el('btn-salva');
+      btn.disabled = true;
+      btn.textContent = 'Salvataggio…';
+      google.script.run
+        .withSuccessHandler(function (risposta) {
+          btn.disabled = false;
+          btn.textContent = 'Salva modifiche';
+          if (risposta.errore) {
+            if (risposta.sessione) { esci(); return; }
+            mostraMessaggio('messaggio-presenza', risposta.errore, 'errore');
+            return;
+          }
+          resetModulo();
+          apriScheda('riepilogo');
+          mostraMessaggio('messaggio-riepilogo', 'Presenza di ' + nome + ' modificata e confermata ✓', 'ok');
+        })
+        .withFailureHandler(function (err) {
+          btn.disabled = false;
+          btn.textContent = 'Salva modifiche';
+          mostraMessaggio('messaggio-presenza', testoErrore(err), 'errore');
+        })
+        .salvaPresenza(token, presenza);
+      return;
+    }
+
+    // Le proprie: compare subito nell'elenco ("Salvataggio in corso…") e il modulo si libera.
+    // Se il server risponde con un errore, l'elenco torna com'era e i dati tornano nel modulo.
+    const eraModifica = !!idInModifica;
+    const elencoPrima = miePresenze.slice();
+    const provvisoria = Object.assign({}, presenza, {
+      id: presenza.id || 'temp-' + Date.now(),
+      stato: sonoAdmin() ? CONFERMATA : DA_CONFERMARE,
+      inAttesa: true
+    });
+    if (eraModifica) {
+      miePresenze = miePresenze.map(function (x) { return x.id === presenza.id ? provvisoria : x; });
+    } else {
+      miePresenze = miePresenze.concat([provvisoria]);
+    }
+    miePresenze.sort(function (a, b) { return (a.data + a.entrata).localeCompare(b.data + b.entrata); });
+    resetModulo();
+    mostraMessaggio('messaggio-presenza', '');
+
+    function annulla(testo) {
+      miePresenze = elencoPrima;
+      if (eraModifica) riempiModulo(presenza);
+      else {
+        resetModulo();
+        el('p-data').value = presenza.data;
+        el('p-entrata').value = presenza.entrata;
+        el('p-uscita').value = presenza.uscita;
+        el('p-descrizione').value = presenza.descrizione;
+        aggiornaContatore();
+        suggerimentiGiorno(false);
+        moduloToccato = true;
+      }
+      mostraMessaggio('messaggio-presenza', testo, 'errore');
+    }
+
+    google.script.run
+      .withSuccessHandler(function (risposta) {
+        if (risposta.errore) {
+          if (risposta.sessione) { esci(); return; }
+          annulla(risposta.errore);
+          return;
+        }
+        aggiornaDati(risposta);
+        mostraMessaggio('messaggio-presenza', eraModifica ? 'Modifica salvata ✓' : 'Presenza salvata ✓', 'ok');
+      })
+      .withFailureHandler(function (err) { annulla(testoErrore(err)); })
+      .salvaPresenza(token, presenza);
+  });
+
+  // Colori fissi per persona (in base all'ordine nella scheda Utenti)
+  const COLORI = ['#2e86de', '#e67e22', '#27ae60', '#8e44ad', '#c0392b', '#16a085', '#d4ac0d', '#7f8c8d'];
+  const MESI = ['Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno',
+                'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre'];
+
+  function coloreDi(indice) {
+    return indice >= 0 ? COLORI[indice % COLORI.length] : '#999';
+  }
+
+  // ---------- Riepilogo ----------
+
+  let datiRiepilogo = null;   // presenze ricevute dal foglio
+  let filtriPronti = false;   // i menu Persona/Mese sono già stati riempiti?
+
+  // Da 270 minuti a "4h 30m"
+  function formattaOre(minuti) {
+    const h = Math.floor(minuti / 60);
+    const m = minuti % 60;
+    return m ? h + 'h ' + m + 'm' : h + 'h';
+  }
+
+  function nomeMese(chiave) { // "2026-10" → "Ottobre 2026"
+    const [anno, mese] = chiave.split('-').map(Number);
+    return MESI[mese - 1] + ' ' + anno;
+  }
+
+  function utenteDi(email) {
+    return datiRiepilogo.utenti.find(function (u) { return u.username === email; }) ||
+      { nome: email, colore: -1 };
+  }
+
+  function caricaRiepilogo() {
+    // Mostra subito l'ultimo riepilogo in memoria, poi lo aggiorna
+    const salvato = leggiCache('riepilogo');
+    if (salvato) {
+      datiRiepilogo = salvato;
+      riempiFiltri();
+      mostraRiepilogo();
+    } else {
+      el('r-risultati').innerHTML = '<div class="box"><p class="vuoto">Caricamento…</p></div>';
+    }
+    google.script.run
+      .withSuccessHandler(function (risposta) {
+        if (risposta.errore) {
+          if (risposta.sessione) { esci(); return; }
+          el('r-risultati').innerHTML = '<div class="box"><p>' + sicuro(risposta.errore) + '</p></div>';
+          return;
+        }
+        delete risposta.ms;
+        salvaCache('riepilogo', risposta);
+        datiRiepilogo = risposta;
+        riempiFiltri();
+        mostraRiepilogo();
+      })
+      .withFailureHandler(function (err) {
+        if (salvato) return;
+        el('r-risultati').innerHTML = '<div class="box"><p>' + sicuro(testoErrore(err)) + '</p></div>';
+      })
+      .caricaRiepilogo(token);
+  }
+
+  // Riempie i menu Persona e Mese (mantenendo la scelta già fatta)
+  function riempiFiltri() {
+    // Il filtro Persona serve solo all'amministratore
+    el('r-blocco-persona').classList.toggle('nascosto', !datiRiepilogo.admin);
+    el('r-filtri').classList.toggle('due-colonne', !!datiRiepilogo.admin);
+    const persona = el('r-persona').value;
+    const mese = el('r-mese').value;
+
+    el('r-persona').innerHTML = '<option value="">Tutte</option>' +
+      datiRiepilogo.utenti.map(function (u) {
+        return '<option value="' + sicuro(u.username) + '">' + sicuro(u.nome) + '</option>';
+      }).join('');
+
+    const mesi = [];
+    datiRiepilogo.presenze.forEach(function (p) {
+      const m = p.data.slice(0, 7);
+      if (mesi.indexOf(m) === -1) mesi.push(m);
+    });
+    mesi.sort().reverse();
+    el('r-mese').innerHTML = '<option value="">Tutti</option>' +
+      mesi.map(function (m) { return '<option value="' + m + '">' + nomeMese(m) + '</option>'; }).join('');
+
+    if (filtriPronti) {
+      el('r-persona').value = persona;
+      el('r-mese').value = mese;
+    } else {
+      // La prima volta mostra il mese corrente, se ha delle presenze
+      const corrente = datiRiepilogo.oggi.slice(0, 7);
+      if (mesi.indexOf(corrente) !== -1) el('r-mese').value = corrente;
+      filtriPronti = true;
+    }
+  }
+
+  // Presenze che corrispondono ai filtri scelti
+  function presenzeFiltrate() {
+    const personaScelta = el('r-persona').value;
+    const meseScelto = el('r-mese').value;
+    return datiRiepilogo.presenze.filter(function (p) {
+      return (!personaScelta || p.username === personaScelta) &&
+             (!meseScelto || p.data.indexOf(meseScelto) === 0);
+    });
+  }
+
+  // Un riquadro per persona, diviso per mese, con lo stato di ogni presenza
+  function mostraRiepilogo() {
+    const filtrate = presenzeFiltrate();
+    const admin = !!datiRiepilogo.admin;
+    const oggi = datiRiepilogo.oggi;
+
+    if (filtrate.length === 0) {
+      el('r-risultati').innerHTML = '<div class="box"><p class="vuoto">Nessuna presenza per questa selezione.</p></div>';
+      return;
+    }
+
+    let html = '';
+
+    // Admin: quante presenze aspettano conferma in questa selezione
+    const daConfermare = filtrate.filter(function (p) { return p.stato !== CONFERMATA; });
+    if (admin && daConfermare.length) {
+      html += '<div class="box barra-conferma"><span><strong>' + daConfermare.length + '</strong> ' +
+        (daConfermare.length === 1 ? 'presenza da confermare' : 'presenze da confermare') + '</span>' +
+        '<button type="button" class="pulsante-piccolo" data-azione="conferma-tutte">Conferma tutte</button></div>';
+    }
+
+    datiRiepilogo.utenti.forEach(function (u) {
+      const sue = filtrate.filter(function (p) { return p.username === u.username; });
+      if (sue.length === 0) return;
+
+      const totale = sue.reduce(function (s, p) { return s + p.minuti; }, 0);
+      const inAttesa = sue.filter(function (p) { return p.stato !== CONFERMATA; }).length;
+
+      const mesi = [];
+      sue.forEach(function (p) {
+        const m = p.data.slice(0, 7);
+        if (mesi.indexOf(m) === -1) mesi.push(m);
+      });
+      mesi.sort().reverse();
+
+      html += '<div class="box">' +
+        '<div class="r-testa">' +
+          '<h2><span class="pallino" style="background:' + coloreDi(u.colore) + '"></span>' + sicuro(u.nome) + '</h2>' +
+          '<span class="r-totale">' + formattaOre(totale) + '</span>' +
+        '</div>' +
+        '<p class="r-sotto">' + (sue.length - inAttesa) + ' confermate · ' + inAttesa + ' da confermare</p>';
+
+      mesi.forEach(function (m) {
+        const delMese = sue.filter(function (p) { return p.data.indexOf(m) === 0; });
+        const minutiMese = delMese.reduce(function (s, p) { return s + p.minuti; }, 0);
+        const giorni = [];
+        delMese.forEach(function (p) { if (giorni.indexOf(p.data) === -1) giorni.push(p.data); });
+
+        html += '<div class="r-mese">' +
+          '<h3>' + nomeMese(m) + '<span>' + giorni.length + (giorni.length === 1 ? ' giorno' : ' giorni') +
+            ' · ' + formattaOre(minutiMese) + '</span></h3>' +
+          '<details' + (admin ? ' open' : '') + '><summary>Dettaglio (' + delMese.length + ')</summary><ul class="dettaglio">' +
+            delMese.map(function (p) {
+              const prevista = p.data > oggi;
+              return '<li class="' + (prevista ? 'prevista' : '') + '">' +
+                '<span>' + dataLeggibile(p.data) + '</span>' +
+                '<span class="ore">' + formattaOre(p.minuti) + '</span>' +
+                '<small>' + p.entrata + '–' + p.uscita + (prevista ? ' · prevista' : '') + '</small>' +
+                '<small class="descrizione">' + sicuro(p.descrizione) + '</small>' +
+                '<span class="riga-stato">' + etichettaStato(p.stato) +
+                  (p.modifiche ? 'modificata ' + (p.modifiche === 1 ? '1 volta' : p.modifiche + ' volte') : '') + '</span>' +
+                (admin
+                  ? '<div class="azioni">' +
+                      (p.stato !== CONFERMATA
+                        ? '<button type="button" data-azione="conferma" data-id="' + p.id + '">Conferma</button>' : '') +
+                      '<button type="button" data-azione="modifica-r" data-id="' + p.id + '">Modifica</button>' +
+                    '</div>'
+                  : '') +
+                '</li>';
+            }).join('') +
+          '</ul></details>' +
+        '</div>';
+      });
+
+      html += '</div>';
+    });
+
+    el('r-risultati').innerHTML = html;
+  }
+
+  el('r-persona').addEventListener('change', mostraRiepilogo);
+  el('r-mese').addEventListener('change', mostraRiepilogo);
+
+  // Pulsanti del riepilogo (solo admin): Conferma, Conferma tutte, Modifica
+  el('r-risultati').addEventListener('click', function (e) {
+    const btn = e.target.closest('button');
+    if (!btn || !datiRiepilogo || !datiRiepilogo.admin) return;
+    const azione = btn.dataset.azione;
+
+    if (azione === 'conferma') conferma([btn.dataset.id]);
+
+    if (azione === 'conferma-tutte') {
+      conferma(presenzeFiltrate()
+        .filter(function (p) { return p.stato !== CONFERMATA; })
+        .map(function (p) { return p.id; }));
+    }
+
+    if (azione === 'modifica-r') {
+      const p = datiRiepilogo.presenze.find(function (x) { return x.id === btn.dataset.id; });
+      if (!p) return;
+      const mia = utente.username && p.username === utente.username;
+      apriScheda('segna');
+      riempiModulo(p, mia ? null : utenteDi(p.username).nome);
+    }
+  });
+
+  // Conferma subito a schermo; se il server dà errore, torna com'era
+  function conferma(ids) {
+    if (!ids.length) return;
+    const prima = {};
+    datiRiepilogo.presenze.forEach(function (p) {
+      if (ids.indexOf(p.id) !== -1) { prima[p.id] = p.stato; p.stato = CONFERMATA; }
+    });
+    salvaCache('riepilogo', datiRiepilogo);
+    mostraRiepilogo();
+    mostraMessaggio('messaggio-riepilogo', ids.length === 1 ? 'Presenza confermata ✓' : ids.length + ' presenze confermate ✓', 'ok');
+
+    function ripristina(testo) {
+      datiRiepilogo.presenze.forEach(function (p) { if (p.id in prima) p.stato = prima[p.id]; });
+      salvaCache('riepilogo', datiRiepilogo);
+      mostraRiepilogo();
+      mostraMessaggio('messaggio-riepilogo', testo, 'errore');
+    }
+
+    google.script.run
+      .withSuccessHandler(function (risposta) {
+        if (risposta.errore) {
+          if (risposta.sessione) { esci(); return; }
+          ripristina(risposta.errore);
+        }
+      })
+      .withFailureHandler(function (err) { ripristina(testoErrore(err)); })
+      .confermaPresenze(token, ids);
+  }
+
+  // ---------- Primo accesso / password dimenticata ----------
+
+  function mostraAttivazione(si) {
+    el('form-login').classList.toggle('nascosto', si);
+    el('form-attivazione').classList.toggle('nascosto', !si);
+    if (si && el('username').value) el('a-email').value = el('username').value;
+  }
+  el('vai-attivazione').addEventListener('click', function () { mostraAttivazione(true); });
+  el('torna-login').addEventListener('click', function () { mostraAttivazione(false); });
+
+  el('form-attivazione').addEventListener('submit', function (e) {
+    e.preventDefault();
+    if (el('a-password').value !== el('a-password2').value) {
+      mostraMessaggio('errore-attivazione', 'Le due password non coincidono.', 'errore');
+      return;
+    }
+    const btn = el('btn-attiva');
+    btn.disabled = true;
+    mostraMessaggio('errore-attivazione', '', 'errore');
+
+    google.script.run
+      .withSuccessHandler(function (risposta) {
+        btn.disabled = false;
+        if (risposta.errore) {
+          mostraMessaggio('errore-attivazione', risposta.errore, 'errore');
+          return;
+        }
+        token = risposta.token;
+        utente = risposta;
+        salvaToken(token);
+        el('a-codice').value = el('a-password').value = el('a-password2').value = '';
+        mostraAttivazione(false);
+        mostraApp(risposta.dati);
+      })
+      .withFailureHandler(function (err) {
+        btn.disabled = false;
+        mostraMessaggio('errore-attivazione', testoErrore(err), 'errore');
+      })
+      .attivaAccount(el('a-email').value, el('a-codice').value, el('a-password').value);
+  });
+
+  // ---------- Cambio password ----------
+
+  el('btn-account').addEventListener('click', function () {
+    mostraMessaggio('messaggio-password', '');
+    apriScheda('account');
+  });
+
+  el('form-password').addEventListener('submit', function (e) {
+    e.preventDefault();
+    if (el('c-nuova').value !== el('c-nuova2').value) {
+      mostraMessaggio('messaggio-password', 'Le due password non coincidono.', 'errore');
+      return;
+    }
+    const btn = el('btn-cambia');
+    btn.disabled = true;
+    google.script.run
+      .withSuccessHandler(function (risposta) {
+        btn.disabled = false;
+        if (risposta.errore) {
+          if (risposta.sessione) { esci(); return; }
+          mostraMessaggio('messaggio-password', risposta.errore, 'errore');
+          return;
+        }
+        el('c-vecchia').value = el('c-nuova').value = el('c-nuova2').value = '';
+        mostraMessaggio('messaggio-password', 'Password cambiata ✓', 'ok');
+      })
+      .withFailureHandler(function (err) {
+        btn.disabled = false;
+        mostraMessaggio('messaggio-password', testoErrore(err), 'errore');
+      })
+      .cambiaPassword(token, el('c-vecchia').value, el('c-nuova').value);
+  });
+
+  // ---------- Menu utente (cerchio con le iniziali) ----------
+
+  // "Laura Rossi" → "LR", "Virginia" → "V"
+  function iniziali(nome) {
+    const parole = String(nome).trim().split(/\s+/).filter(Boolean);
+    if (parole.length === 0) return '?';
+    const prima = parole[0].charAt(0);
+    const ultima = parole.length > 1 ? parole[parole.length - 1].charAt(0) : '';
+    return (prima + ultima).toUpperCase();
+  }
+
+  function chiudiTendina() {
+    el('tendina-utente').classList.add('nascosto');
+    el('btn-avatar').setAttribute('aria-expanded', 'false');
+  }
+
+  el('btn-avatar').addEventListener('click', function (e) {
+    e.stopPropagation();
+    const aperta = !el('tendina-utente').classList.contains('nascosto');
+    el('tendina-utente').classList.toggle('nascosto', aperta);
+    el('btn-avatar').setAttribute('aria-expanded', String(!aperta));
+  });
+  document.addEventListener('click', function (e) {
+    if (!e.target.closest('.menu-utente')) chiudiTendina();
+  });
+  el('btn-account').addEventListener('click', chiudiTendina);
+  el('btn-logout').addEventListener('click', chiudiTendina);
+
+  // ---------- All'apertura della pagina ----------
+  // Se c'è un login salvato, entra subito con gli ultimi dati in memoria;
+  // se nel frattempo la sessione è scaduta, il server lo segnala e si torna al login.
+  const tokenSalvato = leggiToken();
+  const utenteSalvato = leggiCache('utente');
+  if (tokenSalvato && utenteSalvato) {
+    token = tokenSalvato;
+    utente = utenteSalvato;
+    mostraApp(null);
+  } else if (tokenSalvato) {
+    google.script.run
+      .withSuccessHandler(function (risposta) {
+        if (risposta.errore) { salvaToken(null); return; }
+        token = tokenSalvato;
+        utente = risposta;
+        mostraApp(risposta.dati);
+      })
+      .chiSono(tokenSalvato);
+  }
+</script>
+</body>
+</html>
