@@ -1,0 +1,1307 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Presenze Studio</title>
+  <!-- Icona e comportamento "da app" quando il sito è aggiunto alla schermata Home -->
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="icon" type="image/png" href="icona-192.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Presenze">
+  <meta name="theme-color" content="#f4f4f2">
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      margin: 0; padding: 16px;
+      background: #f4f4f2; color: #1a1a1a;
+    }
+    .contenitore { max-width: 480px; margin: 0 auto; }
+    .box {
+      background: #fff; padding: 20px; border-radius: 12px;
+      margin-bottom: 16px;
+    }
+    h1 { font-size: 22px; margin: 0 0 8px; }
+    h2 { font-size: 17px; margin: 0 0 4px; }
+    label { display: block; font-size: 14px; margin: 16px 0 6px; }
+    textarea { resize: vertical; line-height: 1.4; font-family: inherit; }
+    .contatore { text-align: right; font-size: 12px; color: #999; margin-top: 4px; }
+    input, select, textarea {
+      width: 100%; min-height: 46px; padding: 10px 12px; font-size: 16px;
+      border: 1px solid #ccc; border-radius: 8px;
+      background: #fff; color: #1a1a1a;
+      -webkit-appearance: none; appearance: none;
+    }
+    select {
+      padding-right: 34px;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%23555' stroke-width='1.6'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 12px center;
+    }
+    .spunta { display: flex; align-items: center; gap: 10px; margin: 16px 0 0; font-size: 15px; cursor: pointer; }
+    .spunta input {
+      width: 22px; height: 22px; min-height: 0; padding: 0; margin: 0; flex: none;
+      -webkit-appearance: checkbox; appearance: auto; accent-color: #1a1a1a;
+    }
+    .spunta small { color: #888; }
+    .nota-giorno { font-size: 13px; color: #555; background: #f4f4f2; border-radius: 6px; padding: 6px 10px; margin: 8px 0 0; }
+    .giorno .segno { width: 14px; height: 3px; border-radius: 2px; background: transparent; }
+    .giorno.con-appuntamento .segno { background: #b5b5b0; }
+    .giorno.scelto .segno { background: #fff; }
+    .appuntamento { background: #f4f4f2; border-radius: 8px; padding: 8px 10px !important; margin-bottom: 6px; border-top: 0 !important; }
+    .due-colonne { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .pulsante {
+      width: 100%; margin-top: 20px; padding: 14px; font-size: 16px;
+      border: 0; border-radius: 8px; background: #1a1a1a; color: #fff;
+    }
+    .pulsante:disabled { opacity: .5; }
+    .messaggio { font-size: 14px; min-height: 20px; margin: 12px 0 0; }
+    .messaggio.errore { color: #c0392b; }
+    .messaggio.ok { color: #1e8449; }
+    .nascosto { display: none !important; }
+    .spiegazione { font-size: 14px; color: #555; margin: 0 0 4px; }
+    label small { color: #888; font-weight: 400; }
+    #vai-attivazione, #torna-login { display: block; margin: 12px auto 0; font-size: 14px; }
+    #a-codice { text-transform: uppercase; letter-spacing: .2em; font-family: ui-monospace, Menlo, monospace; }
+
+    /* Barra in alto */
+    .barra {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 12px; font-size: 15px;
+    }
+    .menu-utente { position: relative; }
+    .avatar {
+      width: 40px; height: 40px; border-radius: 50%; border: 0;
+      background: #1a1a1a; color: #fff; font-size: 14px; font-weight: 600; letter-spacing: .03em;
+    }
+    .tendina {
+      position: absolute; right: 0; top: 46px; z-index: 10; min-width: 180px;
+      background: #fff; border-radius: 10px; padding: 6px;
+      box-shadow: 0 6px 24px rgba(0, 0, 0, .12);
+    }
+    .tendina button {
+      display: block; width: 100%; text-align: left; padding: 12px; font-size: 15px;
+      border: 0; border-radius: 6px; background: none; color: #1a1a1a;
+    }
+    .tendina button:hover { background: #f4f4f2; }
+    .link { background: none; border: 0; padding: 4px; font-size: 15px; color: #555; text-decoration: underline; }
+
+    /* Schede */
+    .schede, .selettore {
+      display: flex; gap: 4px; margin-bottom: 16px;
+      background: #e6e6e3; padding: 4px; border-radius: 10px;
+    }
+    .schede button, .selettore button {
+      flex: 1 1 auto; white-space: nowrap; padding: 10px 8px; font-size: 14px;
+      border: 0; border-radius: 8px; background: transparent; color: #555;
+    }
+    .schede button.attiva, .selettore button.attiva { background: #fff; color: #1a1a1a; font-weight: 600; }
+
+    /* Elenco presenze */
+    .lista { list-style: none; margin: 12px 0 0; padding: 0; }
+    .lista li { padding: 12px 0; border-top: 1px solid #eee; }
+    .lista li strong { display: block; font-size: 15px; }
+    .lista li span { font-size: 14px; color: #666; }
+    .vuoto, .lista .vuoto { color: #888; font-size: 14px; }
+    .lista .descrizione { font-size: 14px; color: #444; margin: 4px 0 0; }
+    .lista li.in-modifica { background: #fff8e1; margin: 0 -20px; padding: 12px 20px; }
+    .azioni { display: flex; gap: 8px; margin-top: 10px; }
+    .azioni button {
+      flex: 1; padding: 9px; font-size: 14px;
+      border: 1px solid #ccc; border-radius: 8px; background: #fff; color: #1a1a1a;
+    }
+    .azioni button.conferma { background: #c0392b; border-color: #c0392b; color: #fff; }
+    /* Calendario */
+    .mese-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+    .mese-nav h2 { margin: 0; }
+    .mese-nav button {
+      width: 44px; height: 44px; font-size: 24px; line-height: 1;
+      border: 1px solid #ddd; border-radius: 8px; background: #fff; color: #1a1a1a;
+    }
+    .griglia { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+    .griglia.intestazione span { text-align: center; font-size: 12px; color: #888; padding-bottom: 4px; }
+    .giorno {
+      min-height: 52px; padding: 6px 2px 4px;
+      display: flex; flex-direction: column; align-items: center; justify-content: space-between;
+      border: 1px solid transparent; border-radius: 8px; background: #f7f7f5;
+      font-size: 15px; color: #1a1a1a;
+    }
+    .giorno.weekend { color: #999; }
+    .giorno.oggi { border-color: #1a1a1a; }
+    .giorno.scelto { background: #1a1a1a; color: #fff; }
+    .pallini { display: flex; gap: 2px; min-height: 8px; align-items: center; }
+    .pallino { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
+    .piu { font-size: 10px; line-height: 1; }
+    .lista li .chi { display: flex; align-items: center; gap: 8px; }
+    .lista li .chi .pallino { width: 10px; height: 10px; }
+    /* Riepilogo */
+    .filtri label { margin-top: 0; }
+    .r-testa { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+    .r-testa h2 { display: flex; align-items: center; gap: 8px; }
+    .r-testa .pallino { width: 12px; height: 12px; }
+    .r-totale { font-size: 20px; font-weight: 600; white-space: nowrap; }
+    .r-mese { border-top: 1px solid #eee; margin-top: 14px; padding-top: 12px; }
+    .r-mese h3 { font-size: 15px; margin: 0 0 6px; display: flex; justify-content: space-between; }
+    .r-mese h3 span { font-weight: 400; color: #666; }
+    .chip-riga { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0; }
+    .chip { font-size: 13px; padding: 4px 10px; border-radius: 99px; background: #f0f0ed; }
+    details summary { font-size: 14px; color: #555; padding: 6px 0; cursor: pointer; }
+    .dettaglio { list-style: none; margin: 0; padding: 0; font-size: 14px; }
+    .dettaglio li { display: grid; grid-template-columns: 1fr auto; gap: 2px 8px; padding: 8px 0; border-top: 1px solid #f2f2f2; }
+    .dettaglio li .ore { text-align: right; font-weight: 600; }
+    .dettaglio li small { color: #777; grid-column: 1 / -1; }
+    .dettaglio li.prevista { color: #888; }
+    /* Dashboard progetti */
+    .titolo-sezione { font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: #777; margin: 24px 4px 8px; }
+    .titolo-sezione:first-child { margin-top: 0; }
+    .responsabile { font-size: 14px; color: #777; margin: 2px 0 0; }
+    .barra-ore { height: 6px; border-radius: 3px; background: #eee; margin: 12px 0 4px; overflow: hidden; }
+    .barra-ore div { height: 100%; background: #1a1a1a; }
+    .barra-ore.oltre div { background: #c0392b; }
+    .nota-ore { font-size: 12px; color: #777; }
+    .chip .pallino { margin-right: 4px; }
+    .pulsante-secondario {
+      width: 100%; margin-top: 10px; padding: 12px; font-size: 15px;
+      border: 1px solid #ccc; border-radius: 8px; background: #fff; color: #1a1a1a;
+    }
+  </style>
+</head>
+<body>
+<div class="contenitore">
+
+  <!-- ===== Schermata di login ===== -->
+  <div id="schermata-login" class="box">
+    <h1>Presenze Studio</h1>
+    <form id="form-login">
+      <label for="username">Email</label>
+      <input id="username" type="email" inputmode="email" autocomplete="username" autocapitalize="none" required>
+
+      <label for="password">Password</label>
+      <input id="password" type="password" autocomplete="current-password" required>
+
+      <button type="submit" id="btn-login" class="pulsante">Entra</button>
+      <p class="messaggio errore" id="errore-login"></p>
+      <button type="button" id="vai-attivazione" class="link">Primo accesso o password dimenticata?</button>
+    </form>
+
+    <!-- Primo accesso / password dimenticata -->
+    <form id="form-attivazione" class="nascosto">
+      <p class="spiegazione">Inserisci il codice di attivazione che hai ricevuto e scegli la tua password.</p>
+
+      <label for="a-email">Email</label>
+      <input id="a-email" type="email" inputmode="email" autocomplete="username" autocapitalize="none" required>
+
+      <label for="a-codice">Codice di attivazione</label>
+      <input id="a-codice" autocapitalize="characters" autocomplete="one-time-code" maxlength="6" required>
+
+      <label for="a-password">Nuova password <small>(almeno 8 caratteri)</small></label>
+      <input id="a-password" type="password" autocomplete="new-password" minlength="8" required>
+
+      <label for="a-password2">Ripeti la password</label>
+      <input id="a-password2" type="password" autocomplete="new-password" minlength="8" required>
+
+      <button type="submit" id="btn-attiva" class="pulsante">Salva password ed entra</button>
+      <p class="messaggio errore" id="errore-attivazione"></p>
+      <button type="button" id="torna-login" class="link">Torna all'accesso</button>
+    </form>
+  </div>
+
+  <!-- ===== Schermata dopo il login ===== -->
+  <div id="schermata-app" class="nascosto">
+
+    <div class="barra">
+      <span>Ciao, <strong id="nome-utente"></strong></span>
+      <div class="menu-utente">
+        <button type="button" id="btn-avatar" class="avatar" aria-haspopup="true" aria-expanded="false"></button>
+        <div id="tendina-utente" class="tendina nascosto">
+          <button type="button" id="btn-account">Cambia password</button>
+          <button type="button" id="btn-logout">Esci</button>
+        </div>
+      </div>
+    </div>
+
+    <nav class="schede">
+      <button data-scheda="calendario">Calendario</button>
+      <button data-scheda="segna">Segna presenza</button>
+      <button data-scheda="riepilogo" id="tab-riepilogo">Riepilogo</button>
+    </nav>
+
+    <!-- Scheda: Calendario condiviso -->
+    <section id="scheda-calendario" class="scheda nascosto">
+      <div class="box">
+        <div class="mese-nav">
+          <button type="button" id="mese-prec" aria-label="Mese precedente">‹</button>
+          <h2 id="titolo-mese"></h2>
+          <button type="button" id="mese-succ" aria-label="Mese successivo">›</button>
+        </div>
+        <div class="griglia intestazione">
+          <span>L</span><span>M</span><span>M</span><span>G</span><span>V</span><span>S</span><span>D</span>
+        </div>
+        <div class="griglia" id="griglia-giorni"></div>
+      </div>
+
+      <div class="box">
+        <h2 id="titolo-giorno"></h2>
+        <ul id="lista-giorno" class="lista"></ul>
+      </div>
+    </section>
+
+    <!-- Scheda: Segna presenza -->
+    <section id="scheda-segna" class="scheda">
+      <div class="box" id="box-modulo">
+        <h2 id="titolo-modulo">Nuova presenza</h2>
+        <form id="form-presenza">
+          <label for="p-data">Data</label>
+          <input type="date" id="p-data" required>
+          <p id="nota-giorno" class="nota-giorno nascosto"></p>
+
+          <div class="due-colonne">
+            <div>
+              <label for="p-entrata">Entrata</label>
+              <input type="time" id="p-entrata" required>
+            </div>
+            <div>
+              <label for="p-uscita">Uscita</label>
+              <input type="time" id="p-uscita" required>
+            </div>
+          </div>
+
+          <label class="spunta">
+            <input type="checkbox" id="p-pausa">
+            <span>Pausa pranzo <small>(toglie 1 ora dal conteggio)</small></span>
+          </label>
+
+          <label for="p-progetto">Progetto</label>
+          <select id="p-progetto" required>
+            <option value="">Scegli…</option>
+          </select>
+
+          <label for="p-descrizione">Cosa farai in studio</label>
+          <textarea id="p-descrizione" rows="3" maxlength="200" required
+            placeholder="Es. cucito, cartamodelli, serigrafia…"></textarea>
+          <div class="contatore"><span id="contatore-descrizione">0</span>/200</div>
+
+          <button type="submit" id="btn-salva" class="pulsante">Salva presenza</button>
+          <button type="button" id="btn-annulla" class="pulsante-secondario nascosto">Annulla modifica</button>
+          <p class="messaggio" id="messaggio-presenza"></p>
+        </form>
+      </div>
+
+      <div class="box">
+        <h2>Le mie prossime presenze</h2>
+        <ul id="lista-presenze" class="lista"></ul>
+      </div>
+    </section>
+
+    <!-- Scheda: cambio password -->
+    <section id="scheda-account" class="scheda box nascosto">
+      <h2>Cambia password</h2>
+      <form id="form-password">
+        <label for="c-vecchia">Password attuale</label>
+        <input id="c-vecchia" type="password" autocomplete="current-password" required>
+
+        <label for="c-nuova">Nuova password <small>(almeno 8 caratteri)</small></label>
+        <input id="c-nuova" type="password" autocomplete="new-password" minlength="8" required>
+
+        <label for="c-nuova2">Ripeti la nuova password</label>
+        <input id="c-nuova2" type="password" autocomplete="new-password" minlength="8" required>
+
+        <button type="submit" id="btn-cambia" class="pulsante">Cambia password</button>
+        <p class="messaggio" id="messaggio-password"></p>
+      </form>
+    </section>
+
+    <!-- Scheda: Riepilogo (solo amministratore) -->
+    <section id="scheda-riepilogo" class="scheda nascosto">
+      <nav class="selettore">
+        <button type="button" data-vista="persone" class="attiva">Per persona</button>
+        <button type="button" data-vista="progetti">Per progetto</button>
+      </nav>
+
+      <div id="vista-progetti" class="nascosto"></div>
+
+      <div id="vista-persone">
+      <div class="box filtri">
+        <div class="due-colonne">
+          <div>
+            <label for="r-persona">Persona</label>
+            <select id="r-persona"></select>
+          </div>
+          <div>
+            <label for="r-mese">Mese</label>
+            <select id="r-mese"></select>
+          </div>
+        </div>
+      </div>
+      <div id="r-risultati"></div>
+      </div>
+    </section>
+
+  </div>
+</div>
+
+<script>
+  // ============================================================
+  // INDIRIZZO DEL FOGLIO GOOGLE
+  // Incolla qui l'URL dell'app web (quello che finisce con /exec)
+  const API_URL = 'INCOLLA-QUI-IL-LINK-CHE-FINISCE-CON-/exec';
+  // ============================================================
+
+  // Collegamento con Apps Script.
+  // Se la pagina è aperta da Google, usa il collegamento di Google;
+  // se è aperta da GitHub, manda le richieste via internet all'indirizzo qui sopra.
+  // Il resto del codice non cambia: continua a usare google.script.run.
+  if (!(window.google && google.script && google.script.run)) {
+    window.google = {
+      script: {
+        get run() { return nuovaChiamata(); }
+      }
+    };
+  }
+
+  function nuovaChiamata() {
+    let quandoRiesce = function () {};
+    let quandoFallisce = function () {};
+    const chiamata = new Proxy({}, {
+      get: function (_, nome) {
+        if (nome === 'withSuccessHandler') return function (f) { quandoRiesce = f; return chiamata; };
+        if (nome === 'withFailureHandler') return function (f) { quandoFallisce = f; return chiamata; };
+        return function () {
+          fetch(API_URL, {
+            method: 'POST',
+            body: JSON.stringify({ funzione: nome, argomenti: Array.from(arguments) })
+          })
+            .then(function (r) { return r.json(); })
+            .then(function (dati) {
+              if (dati.erroreServer) quandoFallisce(new Error(dati.erroreServer));
+              else quandoRiesce(dati.risultato);
+            })
+            .catch(function () { quandoFallisce(new Error('connessione non riuscita')); });
+        };
+      }
+    });
+    return chiamata;
+  }
+
+  // Orari proposti di default nel modulo (puoi cambiarli)
+  const ORARIO_ENTRATA = '09:00';
+  const ORARIO_USCITA = '18:00';
+
+  let token = null;
+  let utente = null;
+
+  // Scorciatoia per prendere un elemento della pagina dal suo id
+  function el(id) { return document.getElementById(id); }
+
+  // ---------- Memoria del telefono ----------
+  function salvaToken(valore) {
+    try {
+      if (valore) localStorage.setItem('token', valore);
+      else localStorage.removeItem('token');
+    } catch (e) {}
+  }
+  function leggiToken() {
+    try { return localStorage.getItem('token'); } catch (e) { return null; }
+  }
+
+  // ---------- Strumenti ----------
+
+  // Data di oggi nel formato 2026-10-13
+  function dataDiOggi() {
+    const d = new Date();
+    return d.getFullYear() + '-' +
+      String(d.getMonth() + 1).padStart(2, '0') + '-' +
+      String(d.getDate()).padStart(2, '0');
+  }
+
+  // Da "2026-10-14" a "Mercoledì 14 ottobre"
+  function dataLeggibile(testo) {
+    const [anno, mese, giorno] = testo.split('-').map(Number);
+    const d = new Date(anno, mese - 1, giorno);
+    const s = d.toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long' });
+    return s.charAt(0).toUpperCase() + s.slice(1);
+  }
+
+  // Evita che un testo venga interpretato come codice HTML
+  function sicuro(testo) {
+    const d = document.createElement('div');
+    d.textContent = testo;
+    return d.innerHTML;
+  }
+
+  // Testo dell'errore arrivato dal server (così si capisce cosa non va)
+  function testoErrore(err) {
+    return 'Errore: ' + (err && err.message ? err.message : 'connessione non riuscita') + '.';
+  }
+
+  function mostraMessaggio(id, testo, tipo) {
+    el(id).textContent = testo;
+    el(id).className = 'messaggio ' + (tipo || '');
+  }
+
+  // ---------- Schermate e schede ----------
+
+  function mostraApp() {
+    el('nome-utente').textContent = utente.nome;
+    el('btn-avatar').textContent = iniziali(utente.nome);
+    el('tab-riepilogo').classList.toggle('nascosto', utente.ruolo !== 'admin');
+    el('schermata-login').classList.add('nascosto');
+    el('schermata-app').classList.remove('nascosto');
+    apriScheda('segna');
+    resetModulo();
+    caricaDati();
+  }
+
+  function mostraLogin() {
+    el('schermata-app').classList.add('nascosto');
+    el('schermata-login').classList.remove('nascosto');
+  }
+
+  function esci() {
+    token = null;
+    utente = null;
+    salvaToken(null);
+    filtriPronti = false;
+    mostraLogin();
+  }
+
+  function apriScheda(nome) {
+    document.querySelectorAll('.scheda').forEach(function (s) {
+      s.classList.toggle('nascosto', s.id !== 'scheda-' + nome);
+    });
+    document.querySelectorAll('.schede button').forEach(function (b) {
+      b.classList.toggle('attiva', b.dataset.scheda === nome);
+    });
+    if (nome === 'calendario') caricaCalendario();
+    if (nome === 'riepilogo') caricaRiepilogo();
+  }
+
+  document.querySelectorAll('.schede button').forEach(function (b) {
+    b.addEventListener('click', function () { apriScheda(b.dataset.scheda); });
+  });
+
+  // ---------- Login ----------
+
+  el('form-login').addEventListener('submit', function (e) {
+    e.preventDefault();
+    const btn = el('btn-login');
+    btn.disabled = true;
+    btn.textContent = 'Accesso…';
+    mostraMessaggio('errore-login', '', 'errore');
+
+    google.script.run
+      .withSuccessHandler(function (risposta) {
+        btn.disabled = false;
+        btn.textContent = 'Entra';
+        if (risposta.errore) {
+          mostraMessaggio('errore-login', risposta.errore, 'errore');
+          return;
+        }
+        token = risposta.token;
+        utente = risposta;
+        salvaToken(token);
+        el('password').value = '';
+        mostraApp();
+      })
+      .withFailureHandler(function (err) {
+        btn.disabled = false;
+        btn.textContent = 'Entra';
+        mostraMessaggio('errore-login', testoErrore(err), 'errore');
+      })
+      .login(el('username').value, el('password').value);
+  });
+
+  el('btn-logout').addEventListener('click', esci);
+
+  // ---------- Appuntamenti fissi ----------
+
+  // Regole lette dalla scheda "Appuntamenti": { titolo, dal, ogni, orario }
+  let regoleAppuntamenti = [];
+  let voceRiunione = 'Riunione';
+
+  // Appuntamenti che cadono in una data ("2026-10-15")
+  function appuntamentiDel(data) {
+    const [a, m, g] = data.split('-').map(Number);
+    const giorno = Date.UTC(a, m - 1, g);
+    return regoleAppuntamenti.filter(function (r) {
+      const [a2, m2, g2] = r.dal.split('-').map(Number);
+      const differenza = Math.round((giorno - Date.UTC(a2, m2 - 1, g2)) / 86400000);
+      return differenza >= 0 && differenza % (7 * r.ogni) === 0;
+    });
+  }
+
+  // Da "9:30-17:30" a { entrata: "09:30", uscita: "17:30" } (o null)
+  function leggiOrario(testo) {
+    const m = String(testo).match(/(\d{1,2})[:.](\d{2})\s*[-–]\s*(\d{1,2})[:.](\d{2})/);
+    if (!m) return null;
+    return { entrata: m[1].padStart(2, '0') + ':' + m[2], uscita: m[3].padStart(2, '0') + ':' + m[4] };
+  }
+
+  function testoAppuntamento(a) {
+    return a.titolo + (a.orario ? ' · ' + a.orario : '');
+  }
+
+  // ---------- Presenze ----------
+
+  let miePresenze = [];      // le presenze ricevute dal foglio
+  let idInModifica = null;   // id della presenza che si sta modificando (null = nuova)
+  let moduloToccato = false; // l'utente ha già cambiato qualcosa nel modulo?
+  let riunioneSuggerita = false; // "Riunione" è stata scelta in automatico?
+
+  // Mostra sotto la data gli appuntamenti del giorno e, se richiesto,
+  // propone orari e progetto (es. martedì 9:30–17:30, giovedì "Riunione")
+  function suggerimentiGiorno(applica) {
+    const nota = el('nota-giorno');
+    const lista = el('p-data').value ? appuntamentiDel(el('p-data').value) : [];
+    nota.classList.toggle('nascosto', lista.length === 0);
+    nota.textContent = lista.map(testoAppuntamento).join(' — ');
+    if (!applica) return;
+
+    const conOrario = lista.find(function (a) { return leggiOrario(a.orario); });
+    if (conOrario) {
+      const o = leggiOrario(conOrario.orario);
+      el('p-entrata').value = o.entrata;
+      el('p-uscita').value = o.uscita;
+    }
+    const riunione = lista.some(function (a) { return a.titolo.toLowerCase().indexOf('riunione') !== -1; });
+    if (riunione) {
+      el('p-progetto').value = voceRiunione;
+      riunioneSuggerita = true;
+    } else if (riunioneSuggerita && el('p-progetto').value === voceRiunione) {
+      // "Riunione" era stata proposta per un altro giorno: la tolgo
+      el('p-progetto').value = '';
+      riunioneSuggerita = false;
+    }
+  }
+
+  el('p-progetto').addEventListener('change', function () { riunioneSuggerita = false; });
+  el('p-data').addEventListener('change', function () {
+    suggerimentiGiorno(!idInModifica);
+  });
+  el('form-presenza').addEventListener('input', function () { moduloToccato = true; });
+
+  // Riporta il modulo ai valori di partenza (modalità "Nuova presenza")
+  function resetModulo() {
+    idInModifica = null;
+    el('p-data').value = dataDiOggi();
+    el('p-entrata').value = ORARIO_ENTRATA;
+    el('p-uscita').value = ORARIO_USCITA;
+    el('p-pausa').checked = false;
+    el('p-progetto').value = '';
+    el('p-descrizione').value = '';
+    aggiornaContatore();
+    moduloToccato = false;
+    suggerimentiGiorno(true);
+    el('titolo-modulo').textContent = 'Nuova presenza';
+    el('btn-salva').textContent = 'Salva presenza';
+    el('btn-annulla').classList.add('nascosto');
+    mostraLista();
+  }
+
+  // Contatore dei caratteri della descrizione
+  function aggiornaContatore() {
+    el('contatore-descrizione').textContent = el('p-descrizione').value.length;
+  }
+  el('p-descrizione').addEventListener('input', aggiornaContatore);
+
+  // Riempie il modulo con una presenza esistente (modalità "Modifica")
+  function iniziaModifica(id) {
+    const p = miePresenze.find(function (x) { return x.id === id; });
+    if (!p) return;
+    idInModifica = id;
+    el('p-data').value = p.data;
+    el('p-entrata').value = p.entrata;
+    el('p-uscita').value = p.uscita;
+    // Se il progetto non è più nel menu (es. ora "finito"), lo aggiungo per questa modifica
+    const menu = el('p-progetto');
+    if (!Array.from(menu.options).some(function (o) { return o.value === p.progetto; })) {
+      const opzione = document.createElement('option');
+      opzione.value = p.progetto;
+      opzione.textContent = p.progetto;
+      menu.appendChild(opzione);
+    }
+    menu.value = p.progetto;
+    el('p-descrizione').value = p.descrizione;
+    el('p-pausa').checked = !!p.pausa;
+    aggiornaContatore();
+    suggerimentiGiorno(false);
+    el('titolo-modulo').textContent = 'Modifica presenza';
+    el('btn-salva').textContent = 'Salva modifiche';
+    el('btn-annulla').classList.remove('nascosto');
+    mostraMessaggio('messaggio-presenza', '');
+    mostraLista();
+    el('box-modulo').scrollIntoView({ behavior: 'smooth' });
+  }
+
+  el('btn-annulla').addEventListener('click', function () {
+    resetModulo();
+    mostraMessaggio('messaggio-presenza', '');
+  });
+
+  // Chiede al foglio attività e presenze dell'utente
+  function caricaDati() {
+    el('lista-presenze').innerHTML = '<li class="vuoto">Caricamento…</li>';
+    google.script.run
+      .withSuccessHandler(aggiornaDati)
+      .withFailureHandler(function (err) {
+        el('lista-presenze').innerHTML = '<li class="vuoto">' + sicuro(testoErrore(err)) + '</li>';
+      })
+      .caricaMieiDati(token);
+  }
+
+  // Aggiorna menu delle attività ed elenco presenze con i dati ricevuti
+  function aggiornaDati(risposta) {
+    if (risposta.errore) {
+      if (risposta.sessione) esci();
+      return;
+    }
+
+    const menu = el('p-progetto');
+    const scelta = menu.value;
+    menu.innerHTML = '<option value="">Scegli…</option>' +
+      risposta.progetti.map(function (a) {
+        return '<option>' + sicuro(a) + '</option>';
+      }).join('');
+    menu.value = scelta;
+
+    regoleAppuntamenti = risposta.appuntamenti || [];
+    voceRiunione = risposta.riunione || voceRiunione;
+    if (!idInModifica && !moduloToccato) suggerimentiGiorno(true);
+
+    miePresenze = risposta.presenze;
+    mostraLista();
+  }
+
+  // Disegna l'elenco delle presenze con i pulsanti Modifica / Elimina
+  function mostraLista() {
+    const lista = el('lista-presenze');
+    if (miePresenze.length === 0) {
+      lista.innerHTML = '<li class="vuoto">Nessuna presenza segnata.</li>';
+      return;
+    }
+    lista.innerHTML = miePresenze.map(function (p) {
+      return '<li class="' + (p.id === idInModifica ? 'in-modifica' : '') + '">' +
+        '<strong>' + dataLeggibile(p.data) + '</strong>' +
+        '<span>' + p.entrata + '–' + p.uscita + (p.pausa ? ' · pausa pranzo' : '') +
+          ' · ' + sicuro(p.progetto) + '</span>' +
+        '<p class="descrizione">' + sicuro(p.descrizione) + '</p>' +
+        '<div class="azioni">' +
+          '<button type="button" data-azione="modifica" data-id="' + p.id + '">Modifica</button>' +
+          '<button type="button" data-azione="elimina" data-id="' + p.id + '">Elimina</button>' +
+        '</div>' +
+        '</li>';
+    }).join('');
+  }
+
+  // Un solo "ascoltatore" per tutti i pulsanti dell'elenco
+  el('lista-presenze').addEventListener('click', function (e) {
+    const btn = e.target.closest('button');
+    if (!btn) return;
+    const id = btn.dataset.id;
+
+    if (btn.dataset.azione === 'modifica') {
+      iniziaModifica(id);
+    }
+
+    if (btn.dataset.azione === 'elimina') {
+      // Primo tocco: chiede conferma. Secondo tocco: elimina.
+      if (!btn.classList.contains('conferma')) {
+        btn.classList.add('conferma');
+        btn.textContent = 'Conferma eliminazione';
+        setTimeout(function () {
+          if (btn.disabled) return;
+          btn.classList.remove('conferma');
+          btn.textContent = 'Elimina';
+        }, 4000);
+        return;
+      }
+      btn.disabled = true;
+      btn.textContent = 'Eliminazione…';
+      google.script.run
+        .withSuccessHandler(function (risposta) {
+          if (risposta.errore) {
+            if (risposta.sessione) { esci(); return; }
+            mostraMessaggio('messaggio-presenza', risposta.errore, 'errore');
+            return;
+          }
+          if (id === idInModifica) resetModulo();
+          aggiornaDati(risposta);
+          mostraMessaggio('messaggio-presenza', 'Presenza eliminata', 'ok');
+        })
+        .withFailureHandler(function (err) {
+          btn.disabled = false;
+          btn.textContent = 'Elimina';
+          mostraMessaggio('messaggio-presenza', testoErrore(err), 'errore');
+        })
+        .eliminaPresenza(token, id);
+    }
+  });
+
+  // Quando si preme "Salva presenza" / "Salva modifiche"
+  el('form-presenza').addEventListener('submit', function (e) {
+    e.preventDefault();
+
+    const presenza = {
+      id: idInModifica,
+      data: el('p-data').value,
+      entrata: el('p-entrata').value,
+      uscita: el('p-uscita').value,
+      progetto: el('p-progetto').value,
+      descrizione: el('p-descrizione').value.trim(),
+      pausa: el('p-pausa').checked
+    };
+
+    if (!presenza.descrizione) {
+      mostraMessaggio('messaggio-presenza', 'Scrivi una breve descrizione.', 'errore');
+      return;
+    }
+
+    if (presenza.uscita <= presenza.entrata) {
+      mostraMessaggio('messaggio-presenza', "L'uscita deve essere dopo l'entrata.", 'errore');
+      return;
+    }
+
+    const btn = el('btn-salva');
+    const testoPulsante = btn.textContent;
+    const eraModifica = !!idInModifica;
+    btn.disabled = true;
+    btn.textContent = 'Salvataggio…';
+    mostraMessaggio('messaggio-presenza', '');
+
+    google.script.run
+      .withSuccessHandler(function (risposta) {
+        btn.disabled = false;
+        btn.textContent = testoPulsante;
+        if (risposta.errore) {
+          if (risposta.sessione) { esci(); return; }
+          mostraMessaggio('messaggio-presenza', risposta.errore, 'errore');
+          return;
+        }
+        aggiornaDati(risposta);
+        resetModulo();
+        mostraMessaggio('messaggio-presenza', eraModifica ? 'Modifica salvata ✓' : 'Presenza salvata ✓', 'ok');
+      })
+      .withFailureHandler(function (err) {
+        btn.disabled = false;
+        btn.textContent = testoPulsante;
+        mostraMessaggio('messaggio-presenza', testoErrore(err), 'errore');
+      })
+      .salvaPresenza(token, presenza);
+  });
+
+  // ---------- Calendario ----------
+
+  // Un colore fisso per ogni persona (in base all'ordine nella scheda Utenti)
+  const COLORI = ['#2e86de', '#e67e22', '#27ae60', '#8e44ad', '#c0392b', '#16a085', '#d4ac0d', '#7f8c8d'];
+  const MESI = ['Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno',
+                'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre'];
+
+  const adesso = new Date();
+  let annoVisto = adesso.getFullYear();
+  let meseVisto = adesso.getMonth() + 1;   // da 1 a 12
+  let giornoScelto = dataDiOggi();
+  let presenzeMese = [];
+  let richiestaCalendario = 0;             // evita confusione se si cambia mese velocemente
+
+  function coloreDi(indice) {
+    return indice >= 0 ? COLORI[indice % COLORI.length] : '#999';
+  }
+
+  // Da (2026, 10, 5) a "2026-10-05"
+  function componiData(anno, mese, giorno) {
+    return anno + '-' + String(mese).padStart(2, '0') + '-' + String(giorno).padStart(2, '0');
+  }
+
+  function caricaCalendario() {
+    el('titolo-mese').textContent = MESI[meseVisto - 1] + ' ' + annoVisto;
+    presenzeMese = [];
+    disegnaGriglia();
+    el('lista-giorno').innerHTML = '<li class="vuoto">Caricamento…</li>';
+
+    const numero = ++richiestaCalendario;
+    google.script.run
+      .withSuccessHandler(function (risposta) {
+        if (numero !== richiestaCalendario) return; // risposta vecchia, la ignoro
+        if (risposta.errore) {
+          if (risposta.sessione) esci();
+          return;
+        }
+        presenzeMese = risposta.presenze;
+        regoleAppuntamenti = risposta.appuntamenti || regoleAppuntamenti;
+        disegnaGriglia();
+        mostraGiorno();
+      })
+      .withFailureHandler(function (err) {
+        el('lista-giorno').innerHTML = '<li class="vuoto">' + sicuro(testoErrore(err)) + '</li>';
+      })
+      .caricaCalendario(token, annoVisto, meseVisto);
+  }
+
+  // Disegna i giorni del mese con i pallini colorati delle persone presenti
+  function disegnaGriglia() {
+    const giorniNelMese = new Date(annoVisto, meseVisto, 0).getDate();
+    const primoGiorno = (new Date(annoVisto, meseVisto - 1, 1).getDay() + 6) % 7; // 0 = lunedì
+    const oggi = dataDiOggi();
+    let html = '';
+
+    for (let i = 0; i < primoGiorno; i++) html += '<span></span>';
+
+    for (let g = 1; g <= giorniNelMese; g++) {
+      const data = componiData(annoVisto, meseVisto, g);
+      const settimana = (primoGiorno + g - 1) % 7;
+
+      // Persone presenti quel giorno (ognuna una volta sola)
+      const colori = [];
+      presenzeMese.forEach(function (p) {
+        const c = coloreDi(p.colore);
+        if (p.data === data && colori.indexOf(c) === -1) colori.push(c);
+      });
+      let pallini = colori.slice(0, 3).map(function (c) {
+        return '<span class="pallino" style="background:' + c + '"></span>';
+      }).join('');
+      if (colori.length > 3) pallini += '<span class="piu">+' + (colori.length - 3) + '</span>';
+
+      const classi = ['giorno'];
+      if (settimana >= 5) classi.push('weekend');
+      if (data === oggi) classi.push('oggi');
+      if (data === giornoScelto) classi.push('scelto');
+      if (appuntamentiDel(data).length) classi.push('con-appuntamento');
+
+      html += '<button type="button" class="' + classi.join(' ') + '" data-data="' + data + '">' +
+        '<span class="segno"></span><span>' + g + '</span><span class="pallini">' + pallini + '</span></button>';
+    }
+    el('griglia-giorni').innerHTML = html;
+  }
+
+  // Elenco di chi è in studio nel giorno selezionato
+  function mostraGiorno() {
+    el('titolo-giorno').textContent = dataLeggibile(giornoScelto);
+    const delGiorno = presenzeMese.filter(function (p) { return p.data === giornoScelto; });
+    const lista = el('lista-giorno');
+    const appuntamenti = appuntamentiDel(giornoScelto).map(function (a) {
+      return '<li class="appuntamento"><strong>' + sicuro(a.titolo) + '</strong>' +
+        (a.orario ? '<span>' + sicuro(a.orario) + '</span>' : '') + '</li>';
+    }).join('');
+    if (delGiorno.length === 0) {
+      lista.innerHTML = appuntamenti + '<li class="vuoto">Nessuno in studio.</li>';
+      return;
+    }
+    lista.innerHTML = appuntamenti + delGiorno.map(function (p) {
+      return '<li>' +
+        '<strong class="chi"><span class="pallino" style="background:' + coloreDi(p.colore) + '"></span>' +
+          sicuro(p.nome) + (p.mia ? ' (tu)' : '') + '</strong>' +
+        '<span>' + p.entrata + '–' + p.uscita + ' · ' + sicuro(p.progetto) + '</span>' +
+        '</li>';
+    }).join('');
+  }
+
+  // Tocco su un giorno
+  el('griglia-giorni').addEventListener('click', function (e) {
+    const btn = e.target.closest('button');
+    if (!btn) return;
+    giornoScelto = btn.dataset.data;
+    disegnaGriglia();
+    mostraGiorno();
+  });
+
+  // Cambio mese
+  function cambiaMese(spostamento) {
+    meseVisto += spostamento;
+    if (meseVisto < 1) { meseVisto = 12; annoVisto--; }
+    if (meseVisto > 12) { meseVisto = 1; annoVisto++; }
+    // Seleziona oggi se è in quel mese, altrimenti il primo del mese
+    const oggi = dataDiOggi();
+    const prefisso = componiData(annoVisto, meseVisto, 1).slice(0, 7);
+    giornoScelto = oggi.indexOf(prefisso) === 0 ? oggi : prefisso + '-01';
+    caricaCalendario();
+  }
+  el('mese-prec').addEventListener('click', function () { cambiaMese(-1); });
+  el('mese-succ').addEventListener('click', function () { cambiaMese(1); });
+
+  // ---------- Riepilogo (solo amministratore) ----------
+
+  let datiRiepilogo = null;   // tutte le presenze ricevute dal foglio
+  let filtriPronti = false;   // i menu Persona/Mese sono già stati riempiti?
+
+  // Da 270 minuti a "4h 30m"
+  function formattaOre(minuti) {
+    const h = Math.floor(minuti / 60);
+    const m = minuti % 60;
+    return m ? h + 'h ' + m + 'm' : h + 'h';
+  }
+
+  function nomeMese(chiave) { // "2026-10" → "Ottobre 2026"
+    const [anno, mese] = chiave.split('-').map(Number);
+    return MESI[mese - 1] + ' ' + anno;
+  }
+
+  function caricaRiepilogo() {
+    el('r-risultati').innerHTML = '<div class="box"><p class="vuoto">Caricamento…</p></div>';
+    el('vista-progetti').innerHTML = '<div class="box"><p class="vuoto">Caricamento…</p></div>';
+    google.script.run
+      .withSuccessHandler(function (risposta) {
+        if (risposta.errore) {
+          if (risposta.sessione) { esci(); return; }
+          el('r-risultati').innerHTML = '<div class="box"><p>' + sicuro(risposta.errore) + '</p></div>';
+          return;
+        }
+        datiRiepilogo = risposta;
+        riempiFiltri();
+        mostraRiepilogo();
+        mostraProgetti();
+      })
+      .withFailureHandler(function (err) {
+        el('r-risultati').innerHTML = '<div class="box"><p>' + sicuro(testoErrore(err)) + '</p></div>';
+        el('vista-progetti').innerHTML = '';
+      })
+      .caricaRiepilogo(token);
+  }
+
+  // Riempie i menu Persona e Mese (mantenendo la scelta già fatta)
+  function riempiFiltri() {
+    const persona = el('r-persona').value;
+    const mese = el('r-mese').value;
+
+    el('r-persona').innerHTML = '<option value="">Tutte</option>' +
+      datiRiepilogo.utenti.map(function (u) {
+        return '<option value="' + sicuro(u.username) + '">' + sicuro(u.nome) + '</option>';
+      }).join('');
+
+    const mesi = [];
+    datiRiepilogo.presenze.forEach(function (p) {
+      const m = p.data.slice(0, 7);
+      if (mesi.indexOf(m) === -1) mesi.push(m);
+    });
+    mesi.sort().reverse();
+    el('r-mese').innerHTML = '<option value="">Tutti</option>' +
+      mesi.map(function (m) { return '<option value="' + m + '">' + nomeMese(m) + '</option>'; }).join('');
+
+    if (filtriPronti) {
+      el('r-persona').value = persona;
+      el('r-mese').value = mese;
+    } else {
+      // La prima volta mostra il mese corrente, se ha delle presenze
+      const corrente = datiRiepilogo.oggi.slice(0, 7);
+      if (mesi.indexOf(corrente) !== -1) el('r-mese').value = corrente;
+      filtriPronti = true;
+    }
+  }
+
+  // Costruisce il riepilogo: un riquadro per persona, diviso per mese
+  function mostraRiepilogo() {
+    const personaScelta = el('r-persona').value;
+    const meseScelto = el('r-mese').value;
+    const oggi = datiRiepilogo.oggi;
+
+    const filtrate = datiRiepilogo.presenze.filter(function (p) {
+      return (!personaScelta || p.username === personaScelta) &&
+             (!meseScelto || p.data.indexOf(meseScelto) === 0);
+    });
+
+    if (filtrate.length === 0) {
+      el('r-risultati').innerHTML = '<div class="box"><p class="vuoto">Nessuna presenza per questa selezione.</p></div>';
+      return;
+    }
+
+    let html = '';
+    datiRiepilogo.utenti.forEach(function (u) {
+      const sue = filtrate.filter(function (p) { return p.username === u.username; });
+      if (sue.length === 0) return;
+
+      const totale = sue.reduce(function (s, p) { return s + p.minuti; }, 0);
+
+      // Mesi di questa persona, dal più recente
+      const mesi = [];
+      sue.forEach(function (p) {
+        const m = p.data.slice(0, 7);
+        if (mesi.indexOf(m) === -1) mesi.push(m);
+      });
+      mesi.sort().reverse();
+
+      html += '<div class="box">' +
+        '<div class="r-testa">' +
+          '<h2><span class="pallino" style="background:' + coloreDi(u.colore) + '"></span>' + sicuro(u.nome) + '</h2>' +
+          '<span class="r-totale">' + formattaOre(totale) + '</span>' +
+        '</div>';
+
+      mesi.forEach(function (m) {
+        const delMese = sue.filter(function (p) { return p.data.indexOf(m) === 0; });
+        const minutiMese = delMese.reduce(function (s, p) { return s + p.minuti; }, 0);
+        const giorni = [];
+        const perProgetto = {};
+        delMese.forEach(function (p) {
+          if (giorni.indexOf(p.data) === -1) giorni.push(p.data);
+          perProgetto[p.progetto] = (perProgetto[p.progetto] || 0) + p.minuti;
+        });
+
+        html += '<div class="r-mese">' +
+          '<h3>' + nomeMese(m) + '<span>' + giorni.length + (giorni.length === 1 ? ' giorno' : ' giorni') +
+            ' · ' + formattaOre(minutiMese) + '</span></h3>' +
+          '<div class="chip-riga">' +
+            Object.keys(perProgetto).map(function (a) {
+              return '<span class="chip">' + sicuro(a) + ' ' + formattaOre(perProgetto[a]) + '</span>';
+            }).join('') +
+          '</div>' +
+          '<details><summary>Dettaglio (' + delMese.length + ')</summary><ul class="dettaglio">' +
+            delMese.map(function (p) {
+              const prevista = p.data > oggi;
+              return '<li class="' + (prevista ? 'prevista' : '') + '">' +
+                '<span>' + dataLeggibile(p.data) + '</span>' +
+                '<span class="ore">' + formattaOre(p.minuti) + '</span>' +
+                '<small>' + p.entrata + '–' + p.uscita + (p.pausa ? ' · pausa pranzo' : '') +
+                  ' · ' + sicuro(p.progetto) + (prevista ? ' · prevista' : '') + '</small>' +
+                '<small class="descrizione">' + sicuro(p.descrizione) + '</small>' +
+                '</li>';
+            }).join('') +
+          '</ul></details>' +
+        '</div>';
+      });
+
+      html += '</div>';
+    });
+
+    el('r-risultati').innerHTML = html;
+  }
+
+  el('r-persona').addEventListener('change', mostraRiepilogo);
+  el('r-mese').addEventListener('change', mostraRiepilogo);
+
+  // ---------- Riepilogo: vista per progetto ----------
+
+  let vistaRiepilogo = 'persone';
+
+  document.querySelectorAll('.selettore button').forEach(function (b) {
+    b.addEventListener('click', function () {
+      vistaRiepilogo = b.dataset.vista;
+      document.querySelectorAll('.selettore button').forEach(function (x) {
+        x.classList.toggle('attiva', x === b);
+      });
+      el('vista-persone').classList.toggle('nascosto', vistaRiepilogo !== 'persone');
+      el('vista-progetti').classList.toggle('nascosto', vistaRiepilogo !== 'progetti');
+      if (datiRiepilogo) mostraProgetti();
+    });
+  });
+
+  // Disegna i progetti divisi per stato, con le ore di ognuno
+  function mostraProgetti() {
+    const d = datiRiepilogo;
+    const nomiProgetti = d.progetti.map(function (p) { return p.nome; });
+    let html = '';
+
+    const sezioni = [
+      { titolo: 'In corso', stato: 'in corso' },
+      { titolo: 'Futuri', stato: 'futuro' },
+      { titolo: 'Finiti', stato: 'finito' }
+    ];
+    sezioni.forEach(function (s) {
+      const progetti = d.progetti.filter(function (p) { return p.stato === s.stato; });
+      if (progetti.length === 0) return;
+      html += '<h3 class="titolo-sezione">' + s.titolo + '</h3>';
+      progetti.forEach(function (p) {
+        html += schedaProgetto(p.nome, p.responsabile, p.orePreviste, presenzeDi(p.nome));
+      });
+    });
+
+    // Riunioni
+    const riunioni = presenzeDi(d.riunione);
+    if (riunioni.length) {
+      html += '<h3 class="titolo-sezione">Riunioni</h3>' + schedaProgetto(d.riunione, '', 0, riunioni);
+    }
+
+    // Presenze con un progetto non più presente nella scheda Progetti
+    const altre = d.presenze.filter(function (p) {
+      return p.progetto !== d.riunione && nomiProgetti.indexOf(p.progetto) === -1;
+    });
+    if (altre.length) {
+      html += '<h3 class="titolo-sezione">Non più in elenco</h3>';
+      const nomi = [];
+      altre.forEach(function (p) { if (nomi.indexOf(p.progetto) === -1) nomi.push(p.progetto); });
+      nomi.forEach(function (n) { html += schedaProgetto(n, '', 0, presenzeDi(n)); });
+    }
+
+    el('vista-progetti').innerHTML = html ||
+      '<div class="box"><p class="vuoto">Nessun progetto. Aggiungili nella scheda "Progetti" del foglio.</p></div>';
+  }
+
+  function presenzeDi(progetto) {
+    return datiRiepilogo.presenze.filter(function (p) { return p.progetto === progetto; });
+  }
+
+  function utenteDi(email) {
+    return datiRiepilogo.utenti.find(function (u) { return u.username === email; }) ||
+      { nome: email, colore: -1 };
+  }
+
+  // Riquadro di un singolo progetto
+  function schedaProgetto(nome, responsabile, orePreviste, presenze) {
+    const totale = presenze.reduce(function (s, p) { return s + p.minuti; }, 0);
+    const oggi = datiRiepilogo.oggi;
+
+    // Ore per persona
+    const perPersona = {};
+    presenze.forEach(function (p) {
+      perPersona[p.username] = (perPersona[p.username] || 0) + p.minuti;
+    });
+
+    let html = '<div class="box">' +
+      '<div class="r-testa"><h2>' + sicuro(nome) + '</h2>' +
+        '<span class="r-totale">' + formattaOre(totale) + '</span></div>' +
+      (responsabile ? '<p class="responsabile">Responsabile: ' + sicuro(responsabile) + '</p>' : '');
+
+    // Barra delle ore lavorate rispetto alle previste
+    if (orePreviste > 0) {
+      const percentuale = Math.round(totale / (orePreviste * 60) * 100);
+      html += '<div class="barra-ore' + (percentuale > 100 ? ' oltre' : '') + '">' +
+          '<div style="width:' + Math.min(percentuale, 100) + '%"></div></div>' +
+        '<span class="nota-ore">' + percentuale + '% di ' + orePreviste + 'h previste</span>';
+    }
+
+    if (presenze.length === 0) {
+      return html + '<p class="vuoto">Nessuna ora segnata.</p></div>';
+    }
+
+    html += '<div class="chip-riga">' +
+      Object.keys(perPersona).map(function (email) {
+        const u = utenteDi(email);
+        return '<span class="chip"><span class="pallino" style="background:' + coloreDi(u.colore) + '"></span>' +
+          sicuro(u.nome) + ' ' + formattaOre(perPersona[email]) + '</span>';
+      }).join('') +
+      '</div>';
+
+    // Dettaglio: presenze dalla più recente
+    html += '<details><summary>Dettaglio (' + presenze.length + ')</summary><ul class="dettaglio">' +
+      presenze.slice().reverse().map(function (p) {
+        const prevista = p.data > oggi;
+        return '<li class="' + (prevista ? 'prevista' : '') + '">' +
+          '<span>' + dataLeggibile(p.data) + ' · ' + sicuro(utenteDi(p.username).nome) + '</span>' +
+          '<span class="ore">' + formattaOre(p.minuti) + '</span>' +
+          '<small>' + p.entrata + '–' + p.uscita + (p.pausa ? ' · pausa pranzo' : '') +
+            (prevista ? ' · prevista' : '') + '</small>' +
+          '<small class="descrizione">' + sicuro(p.descrizione) + '</small>' +
+          '</li>';
+      }).join('') +
+      '</ul></details></div>';
+
+    return html;
+  }
+
+  // ---------- Primo accesso / password dimenticata ----------
+
+  function mostraAttivazione(si) {
+    el('form-login').classList.toggle('nascosto', si);
+    el('form-attivazione').classList.toggle('nascosto', !si);
+    if (si && el('username').value) el('a-email').value = el('username').value;
+  }
+  el('vai-attivazione').addEventListener('click', function () { mostraAttivazione(true); });
+  el('torna-login').addEventListener('click', function () { mostraAttivazione(false); });
+
+  el('form-attivazione').addEventListener('submit', function (e) {
+    e.preventDefault();
+    if (el('a-password').value !== el('a-password2').value) {
+      mostraMessaggio('errore-attivazione', 'Le due password non coincidono.', 'errore');
+      return;
+    }
+    const btn = el('btn-attiva');
+    btn.disabled = true;
+    mostraMessaggio('errore-attivazione', '', 'errore');
+
+    google.script.run
+      .withSuccessHandler(function (risposta) {
+        btn.disabled = false;
+        if (risposta.errore) {
+          mostraMessaggio('errore-attivazione', risposta.errore, 'errore');
+          return;
+        }
+        token = risposta.token;
+        utente = risposta;
+        salvaToken(token);
+        el('a-codice').value = el('a-password').value = el('a-password2').value = '';
+        mostraAttivazione(false);
+        mostraApp();
+      })
+      .withFailureHandler(function (err) {
+        btn.disabled = false;
+        mostraMessaggio('errore-attivazione', testoErrore(err), 'errore');
+      })
+      .attivaAccount(el('a-email').value, el('a-codice').value, el('a-password').value);
+  });
+
+  // ---------- Cambio password ----------
+
+  el('btn-account').addEventListener('click', function () {
+    mostraMessaggio('messaggio-password', '');
+    apriScheda('account');
+  });
+
+  el('form-password').addEventListener('submit', function (e) {
+    e.preventDefault();
+    if (el('c-nuova').value !== el('c-nuova2').value) {
+      mostraMessaggio('messaggio-password', 'Le due password non coincidono.', 'errore');
+      return;
+    }
+    const btn = el('btn-cambia');
+    btn.disabled = true;
+    google.script.run
+      .withSuccessHandler(function (risposta) {
+        btn.disabled = false;
+        if (risposta.errore) {
+          if (risposta.sessione) { esci(); return; }
+          mostraMessaggio('messaggio-password', risposta.errore, 'errore');
+          return;
+        }
+        el('c-vecchia').value = el('c-nuova').value = el('c-nuova2').value = '';
+        mostraMessaggio('messaggio-password', 'Password cambiata ✓', 'ok');
+      })
+      .withFailureHandler(function (err) {
+        btn.disabled = false;
+        mostraMessaggio('messaggio-password', testoErrore(err), 'errore');
+      })
+      .cambiaPassword(token, el('c-vecchia').value, el('c-nuova').value);
+  });
+
+  // ---------- Menu utente (cerchio con le iniziali) ----------
+
+  // "Laura Rossi" → "LR", "Virginia" → "V"
+  function iniziali(nome) {
+    const parole = String(nome).trim().split(/\s+/).filter(Boolean);
+    if (parole.length === 0) return '?';
+    const prima = parole[0].charAt(0);
+    const ultima = parole.length > 1 ? parole[parole.length - 1].charAt(0) : '';
+    return (prima + ultima).toUpperCase();
+  }
+
+  function chiudiTendina() {
+    el('tendina-utente').classList.add('nascosto');
+    el('btn-avatar').setAttribute('aria-expanded', 'false');
+  }
+
+  el('btn-avatar').addEventListener('click', function (e) {
+    e.stopPropagation();
+    const aperta = !el('tendina-utente').classList.contains('nascosto');
+    el('tendina-utente').classList.toggle('nascosto', aperta);
+    el('btn-avatar').setAttribute('aria-expanded', String(!aperta));
+  });
+  document.addEventListener('click', function (e) {
+    if (!e.target.closest('.menu-utente')) chiudiTendina();
+  });
+  el('btn-account').addEventListener('click', chiudiTendina);
+  el('btn-logout').addEventListener('click', chiudiTendina);
+
+  // ---------- All'apertura della pagina ----------
+  // Se c'è un login salvato ancora valido, entra direttamente
+  const tokenSalvato = leggiToken();
+  if (tokenSalvato) {
+    google.script.run
+      .withSuccessHandler(function (risposta) {
+        if (risposta.errore) { salvaToken(null); return; }
+        token = tokenSalvato;
+        utente = risposta;
+        mostraApp();
+      })
+      .chiSono(tokenSalvato);
+  }
+</script>
+</body>
+</html>
